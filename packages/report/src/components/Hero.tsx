@@ -6,7 +6,7 @@ import { RingChart } from 'panelui-native/components/ring-chart';
 import { Text } from 'panelui-native/primitives/text';
 import { fmt, health, pct, totals } from '../lib/stats';
 import type { FileEntry, Tab } from '../lib/types';
-import { HEALTH } from '../theme';
+import { HEALTH, PROGRESS_COLOR } from '../theme';
 
 const KINDS = [
   ['Lines', 'l'],
@@ -52,7 +52,7 @@ export function Hero({ files, tab }: { files: FileEntry[]; tab: Tab }) {
           const v = pct(ratio);
           return (
             <Card key={key} className="gap-2 p-4" style={{ flexGrow: 1, flexBasis: '47%', minWidth: 200 }}>
-              <Kpi>
+              <Kpi surface={false}>
                 <Kpi.Header>
                   <Kpi.Title>{label}</Kpi.Title>
                 </Kpi.Header>
@@ -60,7 +60,7 @@ export function Hero({ files, tab }: { files: FileEntry[]; tab: Tab }) {
                   <Kpi.Value>{v.toFixed(1)}%</Kpi.Value>
                 </Kpi.Content>
               </Kpi>
-              <Progress value={v} />
+              <Progress value={v} color={PROGRESS_COLOR[health(v)]} />
               <Text className="text-xs text-muted-foreground">
                 {fmt(ratio[0])} / {fmt(ratio[1])}
               </Text>
