@@ -18,6 +18,10 @@ jobs:
       - run: bunx playwright install --with-deps chromium
       - working-directory: examples/tic-tac-toe
         run: bun run coverage:web
+      - name: Validate report styles (Chromium + WebKit)
+        run: |
+          bunx playwright install --with-deps webkit
+          node scripts/validate-report.mjs "$PWD/examples/tic-tac-toe/.expo-coverage/report.html"
       - uses: actions/upload-artifact@v4
         with:
           name: demo-coverage-report

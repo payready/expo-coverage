@@ -9,7 +9,7 @@ export function Header({ data, tab, onTab }: { data: CoverageData; tab: Tab; onT
   const tabs: Tab[] = [...data.platforms, ...(data.platforms.length > 1 ? (['all'] as const) : [])];
   return (
     <View className="mb-6 flex-row flex-wrap items-end justify-between gap-4">
-      <View>
+      <View style={{ maxWidth: '100%', flexShrink: 1 }}>
         <Text className="text-2xl font-bold text-foreground">{data.title}</Text>
         <Text className="mt-1 text-muted-foreground">
           {data.platforms.map((p) => LABEL[p]).join(' + ')} · generated {new Date(data.generated).toLocaleString()}
@@ -42,7 +42,7 @@ function Meta({ data }: { data: CoverageData }) {
         {ids.length > 0 && <Text className="text-xs text-muted-foreground">{ids.join(' · ')}</Text>}
       </View>
       {git && (
-        <View className="flex-row flex-wrap items-center gap-2">
+        <View className="flex-row flex-wrap items-center gap-2" style={{ maxWidth: '100%' }}>
           <Pressable disabled={!git.url} onPress={() => git.url && void Linking.openURL(git.url)} accessibilityRole={git.url ? 'link' : undefined}>
             <Text className="font-mono text-sm text-foreground" style={git.url ? { textDecorationLine: 'underline' } : undefined}>
               {git.short}
