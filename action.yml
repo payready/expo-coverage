@@ -1,0 +1,48 @@
+name: expo-coverage
+description: Build the end-to-end coverage report from .expo-coverage, upload it, and summarize it on the job.
+branding:
+  icon: check-circle
+  color: green
+inputs:
+  directory:
+    description: Folder that holds coverage-<platform>.json files.
+    default: .expo-coverage
+  fail-under:
+    description: Fail the job when overall line coverage is below this percentage.
+    default: ''
+  artifact-name:
+    description: Name of the uploaded report artifact.
+    default: expo-coverage-report
+  version:
+    description: expo-coverage version to run.
+    default: latest
+outputs:
+  percent:
+    description: Overall line coverage percentage.
+    value: ${{ steps.report.outputs.percent }}
+runs:
+  using: composite
+  steps:
+    - id: report
+      shell: bash
+      run: |
+        npx --yes expo-coverage@${{ inputs.version }} report --dir "${{ inputs.directory }}"
+        json="$(npx --yes expo-coverage@${{ inputs.version }} summary --json --dir "${{ inputs.directory }}")"
+        percent="$(echo "$json" | node -e 'process.stdin.on("data",d=>console.log(JSON.parse(d).lines.pct))')"
+        echo "percent=$percent" >> "$GITHUB_OUTPUT"
+        {
+          echo "### End-to-end coverage: ${percent}%"
+          echo
+          echo '```json'
+          echo "$json"
+          echo '```'
+        } >> "$GITHUB_STEP_SUMMARY"
+        if [ -n "${{ inputs.fail-under }}" ] && node -e 'process.exit(Number(process.argv[1]) < Number(process.argv[2]) ? 0 : 1)' "$percent" "${{ inputs.fail-under }}"; then
+          echo "::error::Coverage ${percent}% is below ${{ inputs.fail-under }}%"
+          exit 1
+        fi
+    - uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: ${{ inputs.artifact-name }}
+        path: ${{ inputs.directory }}/report.html

@@ -113,7 +113,15 @@ export function fileView(data: CoverageData, root: string, path: string, tab: Ta
 
 /** Lines added or changed against `base` (git), per file: `{ 'app/a.tsx': Set(12, 13) }`. */
 export function changedLines(root: string, base: string): Record<string, Set<number>> {
-  const out = execFileSync('git', ['diff', '--unified=0', '--no-color', `${base}...HEAD`, '--', '.'], { cwd: root, encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 });
+  const git = (...args: string[]) => execFileSync('git', args, { cwd: root, encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 });
+  // Diff from where this branch left `base`, through the working tree, so uncommitted edits count too.
+  let from = base;
+  try {
+    from = git('merge-base', base, 'HEAD').trim();
+  } catch {
+    // Not a branch point (e.g. a bare commit); diff against it directly.
+  }
+  const out = git('diff', '--unified=0', '--no-color', '--relative', from, '--', '.');
   const result: Record<string, Set<number>> = {};
   let current: Set<number> | null = null;
   for (const line of out.split('\n')) {
