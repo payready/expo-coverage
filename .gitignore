@@ -5,3 +5,6 @@ dist
 .DS_Store
 tmp
 packages/expo-coverage/assets
+.tmp
+test-results
+playwright-report

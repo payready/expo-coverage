@@ -1,0 +1,15 @@
+appId: dev.example.tictactoe
+---
+- launchApp
+- assertVisible: "X's turn"
+- tapOn:
+    id: cell-0
+- tapOn:
+    id: cell-3
+- tapOn:
+    id: cell-1
+- tapOn:
+    id: cell-4
+- tapOn:
+    id: cell-2
+- assertVisible: "X wins!"

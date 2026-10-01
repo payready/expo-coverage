@@ -44,6 +44,23 @@ describe('babel preset', () => {
     delete process.env.EXPO_COVERAGE;
     expect(code).toContain('__coverage__');
   });
+
+  test('starts the runtime from the entry file only', () => {
+    const babel = require('@babel/core');
+    const { mkdtempSync, writeFileSync } = require('node:fs');
+    const { tmpdir } = require('node:os');
+    const root = require('node:fs').realpathSync(mkdtempSync(join(tmpdir(), 'expo-coverage-entry-')));
+    writeFileSync(join(root, 'package.json'), JSON.stringify({ main: 'index.js' }));
+    writeFileSync(join(root, 'index.js'), '');
+    process.env.EXPO_COVERAGE = '1';
+    const run = (file: string) =>
+      babel.transformSync('export const x = 1;', { filename: join(root, file), presets: [[require.resolve('../babel.cjs'), { cwd: root }]], babelrc: false, configFile: false }).code;
+    const entry = run('index.js');
+    const other = run('other.js');
+    delete process.env.EXPO_COVERAGE;
+    expect(entry).toContain('expo-coverage/autostart');
+    expect(other).not.toContain('expo-coverage/autostart');
+  });
 });
 
 describe('metro wrapper', () => {
@@ -55,13 +72,12 @@ describe('metro wrapper', () => {
     expect(withCoverage(config)).toBe(config);
   });
 
-  test('starts the runtime before the entry, keeps earlier hooks, and keys the cache', () => {
+  test('keys the cache on the flag and keeps an earlier middleware hook', () => {
     process.env.EXPO_COVERAGE = '1';
-    const out = withCoverage({ projectRoot: '/x', cacheVersion: '7', serializer: { getModulesRunBeforeMainModule: () => ['/polyfill.js'] } });
+    const enhance = (m: unknown) => m;
+    const out = withCoverage({ projectRoot: '/x', cacheVersion: '7', server: { enhanceMiddleware: enhance } });
     delete process.env.EXPO_COVERAGE;
-    const before = out.serializer.getModulesRunBeforeMainModule('/entry.js');
-    expect(before[0]).toBe('/polyfill.js');
-    expect(before[1]).toContain('autostart');
     expect(out.cacheVersion).toBe('7+expo-coverage');
+    expect(typeof out.server.enhanceMiddleware).toBe('function');
   });
 });
