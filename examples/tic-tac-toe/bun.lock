@@ -21,6 +21,7 @@
         "expo-coverage": "file:../../.tmp/expo-coverage-0.1.0.tgz",
         "expo-coverage": "file:../../.tmp/expo-coverage-0.1.0.tgz",
         "expo-coverage": "file:../../.tmp/expo-coverage-0.1.0.tgz",
+        "expo-coverage": "file:../../.tmp/expo-coverage-0.1.0.tgz",
         "typescript": "~6.0.3",
       },
     },
