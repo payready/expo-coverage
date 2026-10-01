@@ -1,0 +1,17 @@
+# EAS Workflows version of the iOS job. Needs a collector the simulator can reach; see docs/ci.md.
+name: e2e-ios
+on:
+  pull_request:
+    branches: ['*']
+jobs:
+  build:
+    type: build
+    params:
+      platform: ios
+      profile: e2e-simulator
+  test:
+    needs: [build]
+    type: maestro
+    params:
+      build_id: ${{ needs.build.outputs.build_id }}
+      flow_path: ['.maestro/win.yaml', '.maestro/computer.yaml']

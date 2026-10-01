@@ -1,0 +1,24 @@
+# Runs the demo app's web specs with coverage on every PR (iOS/Android versions live in
+# examples/tic-tac-toe/workflows/e2e.yml for copying into your own app).
+name: demo-e2e
+on:
+  pull_request:
+  workflow_dispatch:
+jobs:
+  web:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with: { bun-version: 1.3.13 }
+      - run: bun install
+      - run: bun run build
+      - run: bun run test
+      - run: bun run example:install
+      - run: bunx playwright install --with-deps chromium
+      - working-directory: examples/tic-tac-toe
+        run: bun run coverage:web
+      - uses: actions/upload-artifact@v4
+        with:
+          name: demo-coverage-report
+          path: examples/tic-tac-toe/.expo-coverage/report.html

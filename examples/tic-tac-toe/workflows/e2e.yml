@@ -1,0 +1,81 @@
+# Copy into your app's .github/workflows/. Web, iOS and Android each upload their raw coverage;
+# the last job merges them into one report and checks a floor.
+name: e2e
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+env:
+  EXPO_COVERAGE: '1'
+
+jobs:
+  web:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npx expo-coverage run -- npx playwright test
+      - uses: actions/upload-artifact@v4
+        with:
+          name: coverage-web
+          path: .expo-coverage/coverage-web.json
+
+  ios:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - run: npm ci
+      - run: curl -Ls https://get.maestro.mobile.dev | bash && echo "$HOME/.maestro/bin" >> "$GITHUB_PATH"
+      - name: Build a simulator app with coverage on
+        run: npx expo run:ios --configuration Debug --no-bundler
+      - name: Run Maestro flows and collect coverage
+        run: npx expo start --port 8081 & sleep 20 && npx expo-coverage run -- maestro test .maestro
+      - uses: actions/upload-artifact@v4
+        with:
+          name: coverage-ios
+          path: .expo-coverage/coverage-ios.json
+
+  android:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - uses: actions/setup-java@v4
+        with: { distribution: temurin, java-version: 17 }
+      - run: npm ci
+      - run: curl -Ls https://get.maestro.mobile.dev | bash && echo "$HOME/.maestro/bin" >> "$GITHUB_PATH"
+      - uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          arch: x86_64
+          script: |
+            npx expo run:android --no-bundler
+            npx expo start --port 8081 &
+            sleep 20
+            npx expo-coverage run -- maestro test .maestro
+      - uses: actions/upload-artifact@v4
+        with:
+          name: coverage-android
+          path: .expo-coverage/coverage-android.json
+
+  report:
+    needs: [web, ios, android]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: coverage-*
+          path: .expo-coverage
+          merge-multiple: true
+      - uses: payready/expo-coverage@v0
+        with:
+          fail-under: 60
