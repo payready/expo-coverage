@@ -195,7 +195,8 @@ presets: [['expo-coverage/babel', { include: ['src/**'], exclude: ['**/generated
 - **JavaScript only.** Native Swift, Kotlin and Java code is not measured.
 - **Dev and instrumented builds.** Instrumented code is slower and bigger. Do not ship it. The flag keeps it out of normal builds.
 - **Files the app never loads are not listed.** Coverage comes from loaded modules, so a screen your tests never reach will be missing rather than shown as 0%.
-- **Native is unverified in this repo's CI.** The web path is tested end to end here. The iOS and Android path uses the same runtime and collector, and the Maestro flows are included, but run them on your own simulator or device before relying on it.
+- **Verified on web and iOS.** The demo's Playwright specs and Maestro flows have run against a real iOS 26 simulator (dev build). Android uses the same runtime and has not been run yet, so treat it as untested.
+- **Dev servers.** In dev builds the app finds Metro on its own. For release or prebuilt apps, bake `EXPO_PUBLIC_COVERAGE_URL` and use `expo-coverage serve`.
 
 ## Repository layout
 

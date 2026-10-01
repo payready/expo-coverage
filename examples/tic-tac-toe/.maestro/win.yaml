@@ -1,6 +1,10 @@
 appId: dev.example.tictactoe
 ---
 - launchApp
+# Dev builds can show iOS's "Open in app?" prompt on first launch.
+- tapOn:
+    text: Open
+    optional: true
 - assertVisible: "X's turn"
 - tapOn:
     id: cell-0
