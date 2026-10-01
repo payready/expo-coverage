@@ -18,5 +18,5 @@ async function load(): Promise<CoverageData> {
 load().then((data) => {
   document.title = `${data.title}: e2e coverage`;
   AppRegistry.registerComponent('App', () => () => <App data={data} />);
-  AppRegistry.runApplication('App', { rootTag: document.getElementById('root') as never });
+  AppRegistry.runApplication('App', { rootTag: document.getElementById('root') as never, initialProps: {} });
 });

@@ -1,0 +1,72 @@
+{
+  "name": "expo-coverage",
+  "version": "0.1.0",
+  "description": "End-to-end JS coverage for Expo apps: iOS, Android and web in one report.",
+  "license": "MIT",
+  "author": "Pay Ready",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/payready/expo-coverage.git"
+  },
+  "homepage": "https://github.com/payready/expo-coverage#readme",
+  "keywords": ["expo", "react-native", "coverage", "istanbul", "e2e", "maestro", "playwright", "detox"],
+  "type": "module",
+  "bin": {
+    "expo-coverage": "./dist/cli.js"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./runtime": {
+      "types": "./dist/runtime.d.ts",
+      "default": "./dist/runtime.js"
+    },
+    "./autostart": "./dist/autostart.js",
+    "./babel": "./babel.cjs",
+    "./metro": "./metro.cjs",
+    "./playwright": {
+      "types": "./dist/playwright.d.ts",
+      "default": "./dist/playwright.js"
+    },
+    "./app.plugin": "./app.plugin.js",
+    "./package.json": "./package.json"
+  },
+  "files": ["dist", "assets", "babel.cjs", "metro.cjs", "app.plugin.js", "README.md", "LICENSE"],
+  "scripts": {
+    "build": "bun run scripts/build.ts",
+    "test": "bun test",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0",
+    "babel-plugin-istanbul": "^7.0.0",
+    "shiki": "^3.0.0",
+    "zod": "^3.23.0"
+  },
+  "peerDependencies": {
+    "@playwright/test": "1.60.0",
+    "expo": ">=52",
+    "react-native": "^0.87.1"
+  },
+  "peerDependenciesMeta": {
+    "@playwright/test": {
+      "optional": true
+    },
+    "expo": {
+      "optional": true
+    }
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "devDependencies": {
+    "@babel/core": "^8.0.6",
+    "@types/bun": "^1.4.2",
+    "@types/node": "^26.6.3",
+    "typescript": "^7.0.2"
+  }
+}
