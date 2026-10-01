@@ -48,7 +48,7 @@ export function Files({ data, files, tab, folder, onFolder, onOpen }: Props) {
   }, [files, tab, q, folder, gapsOnly, sort]);
 
   const showPlatforms = tab === 'all' && data.platforms.length > 1;
-  const columns = [{ flex: 4 }, { flex: 2 }, { flex: 1, align: 'end' as const }, { flex: 1, align: 'end' as const }, ...(showPlatforms ? [{ flex: 1 }] : [])];
+  const columns = [{ flex: 4 }, { flex: 3 }, { flex: 1, align: 'end' as const }, { flex: 1, align: 'end' as const }, ...(showPlatforms ? [{ flex: 1 }] : [])];
   const head = (key: SortKey, label: string) => (
     <Table.Head
       key={key}
@@ -106,10 +106,10 @@ export function Files({ data, files, tab, folder, onFolder, onOpen }: Props) {
                 </Table.Cell>
                 <Table.Cell>
                   <View className="flex-row items-center gap-2">
-                    <View className="flex-1">
+                    <View className="flex-1" style={{ minWidth: 40 }}>
                       <Progress value={value} />
                     </View>
-                    <Text className="w-10 text-right text-foreground">{value.toFixed(0)}%</Text>
+                    <Text className="w-14 shrink-0 text-right text-foreground" numberOfLines={1}>{value.toFixed(0)}%</Text>
                   </View>
                 </Table.Cell>
                 <Table.Cell>{fmt(sums.l[1] - sums.l[0])}</Table.Cell>
