@@ -7,7 +7,8 @@
   "scripts": {
     "build": "bun run --cwd packages/report build && bun run --cwd packages/expo-coverage build",
     "test": "bun run --cwd packages/report test && bun run --cwd packages/expo-coverage test",
-    "example:install": "bash scripts/example.sh"
+    "example:install": "bash scripts/example.sh",
+    "site:publish": "bash scripts/publish-site.sh"
   },
   "devDependencies": {
     "@playwright/test": "1.60.0",

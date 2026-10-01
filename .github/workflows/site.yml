@@ -1,0 +1,23 @@
+name: site
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with: { bun-version: 1.3.13 }
+      - run: bun install
+      - run: bun run build
+      - run: bun run example:install
+      - run: bunx playwright install --with-deps chromium
+      - name: Run demo e2e with coverage
+        working-directory: examples/tic-tac-toe
+        run: bun run coverage:web
+      - name: Deploy demo + report to EAS Hosting
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+        run: bash scripts/publish-site.sh --prod
