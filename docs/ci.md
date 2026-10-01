@@ -21,6 +21,10 @@ jobs:
           fail-under: 70
 ```
 
+The composite action builds the report, uploads it as an artifact and writes the numbers to the job summary. `fail-under` is optional.
+
+Complete web + iOS + Android + merge workflows for the demo are in [examples/tic-tac-toe/workflows/e2e.yml](../examples/tic-tac-toe/workflows/e2e.yml), and [`demo-e2e.yml`](../.github/workflows/demo-e2e.yml) runs the web job on this repo.
+
 ## One report from several jobs
 
 Upload each job's `.expo-coverage` folder, download them into one directory, and run the action there. Files for the same platform add up, and different platforms sit side by side.
@@ -72,7 +76,7 @@ jobs:
 { "build": { "e2e-simulator": { "ios": { "simulator": true }, "env": { "EXPO_COVERAGE": "1" } } } }
 ```
 
-The EAS Maestro job does not give the app a route to a collector on your CI machine. Either run the flows from a runner you control (`npx expo-coverage run -- maestro test .maestro`) or point the build at a collector you host with `EXPO_PUBLIC_COVERAGE_URL`. This path has not been exercised end to end yet.
+The EAS Maestro job does not give the app a route to a collector on your CI machine. Either run the flows from a runner you control (`bunx expo-coverage run -- maestro test .maestro`) or point the build at a collector you host with `EXPO_PUBLIC_COVERAGE_URL`. This path has not been exercised end to end yet.
 
 ## A comment on the pull request
 
@@ -82,7 +86,7 @@ The EAS Maestro job does not give the app a route to a collector on your CI mach
           script: |
             const fs = require('fs');
             const { execSync } = require('child_process');
-            const gaps = execSync('npx expo-coverage diff origin/${{ github.base_ref }}').toString();
+            const gaps = execSync('bunx expo-coverage diff origin/${{ github.base_ref }}').toString();
             await github.rest.issues.createComment({
               ...context.repo,
               issue_number: context.issue.number,
