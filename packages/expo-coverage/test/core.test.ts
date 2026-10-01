@@ -109,3 +109,18 @@ describe('report', () => {
     expect(html.match(/<\/script>/g)!.length).toBe(1);
   });
 });
+
+describe('meta', () => {
+  test('webUrl turns ssh and https remotes into a browsable url', async () => {
+    const { webUrl } = await import('../src/core/meta');
+    expect(webUrl('git@github.com:payready/expo-coverage.git')).toBe('https://github.com/payready/expo-coverage');
+    expect(webUrl('https://x-access-token@github.com/o/r.git')).toBe('https://github.com/o/r');
+    expect(webUrl(null)).toBeNull();
+  });
+
+  test('readApp reads app.json and package.json', async () => {
+    const { readApp } = await import('../src/core/meta');
+    const root = project({ 'app.json': JSON.stringify({ expo: { name: 'Demo', version: '1.2.3', ios: { bundleIdentifier: 'dev.x' } } }), 'package.json': '{"name":"pkg"}' });
+    expect(readApp(root)).toMatchObject({ name: 'Demo', version: '1.2.3', ios: 'dev.x', android: null });
+  });
+});

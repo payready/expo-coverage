@@ -15,7 +15,29 @@ export interface FileEntry {
   sums: Partial<Record<Tab, Sums>>;
 }
 export type Token = [text: string, color: number];
+export interface AppMeta {
+  name: string | null;
+  slug: string | null;
+  version: string | null;
+  ios: string | null;
+  android: string | null;
+  expoSdk: string | null;
+  reactNative: string | null;
+}
+export interface GitMeta {
+  sha: string;
+  short: string;
+  branch: string | null;
+  subject: string | null;
+  dirty: boolean;
+  url: string | null;
+}
+export interface Meta {
+  app: AppMeta | null;
+  git: GitMeta | null;
+}
 export interface CoverageData {
+  meta?: Meta;
   title: string;
   generated: string;
   platforms: Platform[];
