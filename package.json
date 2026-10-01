@@ -1,0 +1,13 @@
+{
+  "name": "expo-coverage-monorepo",
+  "private": true,
+  "workspaces": ["packages/*", "examples/*"],
+  "scripts": {
+    "build": "bun run --cwd packages/report build && bun run --cwd packages/expo-coverage build",
+    "test": "bun run --cwd packages/report test && bun run --cwd packages/expo-coverage test"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.60.0",
+    "playwright": "1.60.0"
+  }
+}
