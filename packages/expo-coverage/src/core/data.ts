@@ -3,6 +3,7 @@ import { extname, join, relative } from 'node:path';
 import { createHighlighter, type BundledLanguage } from 'shiki';
 import { coverageFile } from './paths';
 import { rehome } from './merge';
+import { readMeta } from './meta';
 import { PLATFORMS, type CoverageData, type FileEntry, type Platform, type Sums, type Tab, type Token } from './types';
 
 import { lineCoverage, mergeInto, summarize, type RawCoverage } from './istanbul';
@@ -78,5 +79,5 @@ export async function buildCoverageData(opts: BuildOptions): Promise<CoverageDat
     highlighter.dispose();
   }
 
-  return { title: opts.title ?? 'End-to-end coverage', generated: new Date().toISOString(), platforms: present, files, sources, palette };
+  return { title: opts.title ?? 'End-to-end coverage', meta: readMeta(root), generated: new Date().toISOString(), platforms: present, files, sources, palette };
 }

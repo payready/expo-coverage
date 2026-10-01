@@ -26,6 +26,7 @@
     "babel-preset-expo": "^57.0.13",
     "expo-coverage": "file:../../.tmp/expo-coverage-0.1.0.tgz",
     "expo-coverage": "file:../../.tmp/expo-coverage-0.1.0.tgz",
+    "expo-coverage": "file:../../.tmp/expo-coverage-0.1.0.tgz",
     "typescript": "~6.0.3"
   },
   "overrides": {
