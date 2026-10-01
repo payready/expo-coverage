@@ -49,6 +49,23 @@ for (const [name, engine] of [['chromium', chromium], ['webkit', webkit]]) {
       };
     });
     const where = `${name}/${label}`;
+    // Reanimated only runs on web when its worklets were compiled; otherwise the selection pill never appears.
+    const pill = () => page.evaluate(() => {
+      const d = [...document.querySelectorAll('[role="tablist"] div')].find((e) => getComputedStyle(e).position === 'absolute');
+      return d ? { w: d.getBoundingClientRect().width, x: d.getBoundingClientRect().x, o: Number(getComputedStyle(d).opacity) } : null;
+    });
+    const before = await pill();
+    const tabs = page.getByRole('tab');
+    if ((await tabs.count()) > 1) {
+      await tabs.first().click();
+      await page.waitForTimeout(900);
+      const first = await pill();
+      await tabs.last().click();
+      await page.waitForTimeout(900);
+      const last = await pill();
+      if (!first || first.w < 10 || first.o < 0.9) failures.push(`${where}: tab selection pill is invisible (animations are not running)`);
+      else if (!last || Math.abs(last.x - first.x) < 20) failures.push(`${where}: tab selection pill does not move when you press a tab`);
+    } else if (before && before.w === 0) failures.push(`${where}: tab selection pill has no width`);
     if (errors.length) failures.push(`${where}: page errors ${errors[0]}`);
     if (!result.hasContent) failures.push(`${where}: report did not render`);
     if (result.cardRadius < 8) failures.push(`${where}: cards are square (radius ${result.cardRadius}), PanelUI classes are missing`);
