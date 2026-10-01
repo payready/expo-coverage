@@ -220,7 +220,7 @@ cd examples/tic-tac-toe && bun run coverage:web
 
 ## Demo site
 
-`bun run site:publish` (or the `site` workflow) exports the tic-tac-toe app for web, adds the latest report at `/coverage`, and deploys with [EAS Hosting](https://docs.expo.dev/eas/hosting/introduction/). It needs an `EXPO_TOKEN` secret and a one-time `eas init` in `examples/tic-tac-toe`.
+`bun run site:publish` (or run the `site` workflow by hand) exports the tic-tac-toe app for web, adds the latest report at `/coverage`, and deploys with [EAS Hosting](https://docs.expo.dev/eas/hosting/introduction/). It needs an `EXPO_TOKEN` secret and a one-time `eas init` in `examples/tic-tac-toe`.
 
 ## License
 
