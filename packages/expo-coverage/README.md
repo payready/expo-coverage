@@ -132,7 +132,7 @@ The composite action in this repo builds the report, uploads it as an artifact a
     fail-under: 70        # optional
 ```
 
-See [docs/ci.md](https://github.com/payready/expo-coverage/blob/main/docs/ci.md) for the artifact layout, a PR-comment recipe and an EAS Workflows example.
+Complete web + iOS + Android + merge workflows for the demo are in [examples/tic-tac-toe/workflows/e2e.yml](https://github.com/payready/expo-coverage/tree/main/examples/tic-tac-toe/workflows/e2e.yml), and [`demo-e2e.yml`](https://github.com/payready/expo-coverage/blob/main/.github/workflows/demo-e2e.yml) runs the web job on this repo. See [docs/ci.md](https://github.com/payready/expo-coverage/blob/main/docs/ci.md) for the artifact layout, a PR-comment recipe and an EAS Workflows example.
 
 ## For agents
 
@@ -195,7 +195,8 @@ presets: [['expo-coverage/babel', { include: ['src/**'], exclude: ['**/generated
 - **JavaScript only.** Native Swift, Kotlin and Java code is not measured.
 - **Dev and instrumented builds.** Instrumented code is slower and bigger. Do not ship it. The flag keeps it out of normal builds.
 - **Files the app never loads are not listed.** Coverage comes from loaded modules, so a screen your tests never reach will be missing rather than shown as 0%.
-- **Native is unverified in this repo's CI.** The web path is tested end to end here. The iOS and Android path uses the same runtime and collector, and the Maestro flows are included, but run them on your own simulator or device before relying on it.
+- **Verified on web and iOS.** The demo's Playwright specs and Maestro flows have run against a real iOS 26 simulator (dev build). Android uses the same runtime and has not been run yet, so treat it as untested.
+- **Dev servers.** In dev builds the app finds Metro on its own. For release or prebuilt apps, bake `EXPO_PUBLIC_COVERAGE_URL` and use `expo-coverage serve`.
 
 ## Repository layout
 
@@ -216,6 +217,10 @@ bun run test
 bun run example:install       # pack expo-coverage and install it into the demo app
 cd examples/tic-tac-toe && bun run coverage:web
 ```
+
+## Demo site
+
+`bun run site:publish` (or the `site` workflow) exports the tic-tac-toe app for web, adds the latest report at `/coverage`, and deploys with [EAS Hosting](https://docs.expo.dev/eas/hosting/introduction/). It needs an `EXPO_TOKEN` secret and a one-time `eas init` in `examples/tic-tac-toe`.
 
 ## License
 

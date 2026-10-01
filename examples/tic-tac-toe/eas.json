@@ -1,0 +1,8 @@
+{
+  "build": {
+    "e2e-simulator": {
+      "ios": { "simulator": true },
+      "env": { "EXPO_COVERAGE": "1" }
+    }
+  }
+}

@@ -132,7 +132,7 @@ The composite action in this repo builds the report, uploads it as an artifact a
     fail-under: 70        # optional
 ```
 
-See [docs/ci.md](docs/ci.md) for the artifact layout, a PR-comment recipe and an EAS Workflows example.
+Complete web + iOS + Android + merge workflows for the demo are in [examples/tic-tac-toe/workflows/e2e.yml](examples/tic-tac-toe/workflows/e2e.yml), and [`demo-e2e.yml`](.github/workflows/demo-e2e.yml) runs the web job on this repo. See [docs/ci.md](docs/ci.md) for the artifact layout, a PR-comment recipe and an EAS Workflows example.
 
 ## For agents
 
