@@ -1,8 +1,6 @@
 name: site
 on:
-  push:
-    branches: [main]
-  workflow_dispatch:
+  workflow_dispatch:  # needs the EXPO_TOKEN secret; run by hand once it is set
 jobs:
   deploy:
     runs-on: ubuntu-latest
