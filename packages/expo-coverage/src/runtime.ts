@@ -1,4 +1,4 @@
-import { AppState, NativeModules, Platform } from 'react-native';
+import { AppState, NativeModules, Platform, TurboModuleRegistry } from 'react-native';
 
 declare const process: { env: Record<string, string | undefined> };
 type CoverageGlobal = typeof globalThis & { __coverage__?: unknown; __expoCoverageFlush?: () => Promise<void> };
@@ -15,24 +15,35 @@ export function coverageUrl(): string | null {
   const baked = process.env.EXPO_PUBLIC_COVERAGE_URL;
   if (baked) return baked.replace(/\/$/, '');
   if (Platform.OS === 'web') return typeof location !== 'undefined' ? location.origin : null;
-  const script: string | undefined = NativeModules?.SourceCode?.scriptURL;
+  // Bridgeless (new architecture) apps expose SourceCode as a TurboModule only.
+  const sourceCode = (TurboModuleRegistry?.get?.('SourceCode') as { getConstants?: () => { scriptURL?: string } } | null) ?? null;
+  const script: string | undefined = sourceCode?.getConstants?.().scriptURL ?? NativeModules?.SourceCode?.scriptURL;
   const match = script && /^(https?:\/\/[^/]+)/.exec(script);
   return match ? (match[1] ?? null) : null;
+}
+
+let warned = false;
+function warnOnce(message: string): void {
+  if (warned) return;
+  warned = true;
+  console.warn(`[expo-coverage] ${message}`);
 }
 
 /** Posts the in-memory Istanbul map. Resolves either way: coverage must never break the app under test. */
 export async function flushCoverage(): Promise<void> {
   const coverage = g.__coverage__;
   const base = coverageUrl();
-  if (!coverage || !base) return;
+  if (!coverage) return;
+  if (!base) return warnOnce('could not work out where to post coverage. Set EXPO_PUBLIC_COVERAGE_URL.');
   try {
     await fetch(`${base}/__coverage?platform=${Platform.OS}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(coverage),
     });
-  } catch {
+  } catch (error) {
     // Collector not up yet or already gone; the next flush sends the whole map again.
+    warnOnce(`could not reach ${base} (${error instanceof Error ? error.message : error}). Retrying every flush.`);
   }
 }
 
