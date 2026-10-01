@@ -8,3 +8,6 @@ export const OVERLAP = { some: '#8b5cf6' } as const;
 export const HIT_BG = 'rgba(34,197,94,0.10)';
 export const MISS_BG = 'rgba(239,68,68,0.14)';
 export const MONO = 'ui-monospace, "SF Mono", Menlo, Consolas, monospace';
+
+/** PanelUI Progress/Chip color per health band. */
+export const PROGRESS_COLOR = { good: 'success', warn: 'warning', bad: 'destructive' } as const;

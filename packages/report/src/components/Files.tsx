@@ -6,9 +6,9 @@ import { Chip } from 'panelui-native/components/chip';
 import { Progress } from 'panelui-native/components/progress';
 import { Table } from 'panelui-native/components/table';
 import { Text } from 'panelui-native/primitives/text';
-import { LABEL, areaOf, fmt, missed, pct } from '../lib/stats';
+import { LABEL, areaOf, fmt, health, missed, pct } from '../lib/stats';
 import type { CoverageData, FileEntry, Tab } from '../lib/types';
-import { PLATFORM } from '../theme';
+import { PLATFORM, PROGRESS_COLOR } from '../theme';
 
 type SortKey = 'file' | 'pct' | 'miss' | 'lines';
 const PAGE = 50;
@@ -107,7 +107,7 @@ export function Files({ data, files, tab, folder, onFolder, onOpen }: Props) {
                 <Table.Cell>
                   <View className="flex-row items-center gap-2">
                     <View className="flex-1" style={{ minWidth: 40 }}>
-                      <Progress value={value} />
+                      <Progress value={value} color={PROGRESS_COLOR[health(value)]} />
                     </View>
                     <Text className="w-14 shrink-0 text-right text-foreground" numberOfLines={1}>{value.toFixed(0)}%</Text>
                   </View>

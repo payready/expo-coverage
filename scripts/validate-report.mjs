@@ -28,7 +28,19 @@ for (const [name, engine] of [['chromium', chromium], ['webkit', webkit]]) {
       const chip = up(leaf('Only files with gaps'), 'BUTTON');
       const radius = (el) => (el ? parseFloat(getComputedStyle(el).borderTopLeftRadius) : 0);
       const pad = (el) => (el ? parseFloat(getComputedStyle(el).paddingLeft) : 0);
+      const tab = (() => { let e = leaf('iOS') || leaf('Web'); while (e && e.getAttribute('role') !== 'tab') e = e.parentElement; return e; })();
+      const solidBlackBars = [...document.querySelectorAll('div')].filter((e) => {
+        const r = e.getBoundingClientRect();
+        return r.height > 0 && r.height <= 12 && r.width > 20 && getComputedStyle(e).backgroundColor === 'rgb(0, 0, 0)';
+      }).length;
+      const tablist = document.querySelector('[role="tablist"]');
+      const clipped = tablist ? [...tablist.querySelectorAll('*')].filter((e) => e.children.length === 0 && e.textContent.trim() && e.scrollWidth > e.clientWidth + 1 && getComputedStyle(e).overflow !== 'visible').map((e) => e.textContent.trim()) : [];
+      const tabsWide = tablist ? [...tablist.querySelectorAll('[role="tab"]')].reduce((w, e) => w + e.getBoundingClientRect().width, 0) : 0;
       return {
+        clipped,
+        tabsFit: tablist ? tablist.getBoundingClientRect().width + 1 >= tabsWide : true,
+        tabHeight: tab ? tab.getBoundingClientRect().height : 0,
+        solidBlackBars,
         cardRadius: radius(card),
         chipPadding: pad(chip),
         chipBorderIsDefaultBlack: chip ? getComputedStyle(chip).borderTopColor === 'rgb(0, 0, 0)' && getComputedStyle(chip).borderTopWidth !== '0px' : true,
@@ -42,6 +54,10 @@ for (const [name, engine] of [['chromium', chromium], ['webkit', webkit]]) {
     if (result.cardRadius < 8) failures.push(`${where}: cards are square (radius ${result.cardRadius}), PanelUI classes are missing`);
     if (result.chipPadding < 4) failures.push(`${where}: chip has no padding, PanelUI classes are missing`);
     if (result.chipBorderIsDefaultBlack) failures.push(`${where}: chip has the browser default border`);
+    if (result.clipped.length) failures.push(`${where}: tab text is cut off (${result.clipped.join(', ')})`);
+    if (!result.tabsFit) failures.push(`${where}: tabs do not fit their container`);
+    if (result.tabHeight > 48) failures.push(`${where}: tab labels wrap onto two lines (${Math.round(result.tabHeight)}px tall)`);
+    if (result.solidBlackBars) failures.push(`${where}: ${result.solidBlackBars} solid black bars (progress bars lost their color)`);
     if (result.overflowX > 1) failures.push(`${where}: page scrolls sideways by ${result.overflowX}px`);
     await page.close();
   }

@@ -16,15 +16,25 @@ export function Header({ data, tab, onTab }: { data: CoverageData; tab: Tab; onT
         </Text>
         <Meta data={data} />
       </View>
+      <View style={{ minWidth: tabs.length * 132, maxWidth: '100%' }}>
       <Tabs value={tab} defaultValue={tab} onValueChange={(v) => onTab(v as Tab)}>
         <Tabs.List>
           {tabs.map((t) => (
-            <Tabs.Trigger key={t} value={t}>
-              {`${LABEL[t]}  ${pct(totals(visibleFiles(data, t), t, 'l')).toFixed(1)}%`}
+            <Tabs.Trigger
+              key={t}
+              value={t}
+              badge={
+                <Text className="text-xs text-muted-foreground" numberOfLines={1}>
+                  {pct(totals(visibleFiles(data, t), t, 'l')).toFixed(1)}%
+                </Text>
+              }
+            >
+              {LABEL[t]}
             </Tabs.Trigger>
           ))}
         </Tabs.List>
       </Tabs>
+      </View>
     </View>
   );
 }
