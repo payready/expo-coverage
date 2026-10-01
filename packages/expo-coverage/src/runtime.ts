@@ -40,7 +40,7 @@ let started = false;
 
 /** Flush every `interval` ms, when the app backgrounds, and (web) when the page hides. Safe to call twice. */
 export function startCoverage(options: { interval?: number } = {}): void {
-  if (started || !g.__coverage__) return;
+  if (started) return;
   started = true;
   g.__expoCoverageFlush = flushCoverage;
   const flush = () => void flushCoverage();

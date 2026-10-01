@@ -30,7 +30,8 @@ export function rehome(root: string, data: Record<string, any>): Record<string, 
     if (!path.startsWith(`${root}/`) && path.startsWith(siblings)) {
       local = join(root, path.slice(siblings.length).split('/').slice(1).join('/'));
     }
-    if (!local.startsWith(`${root}/`)) continue;
+    // Virtual modules (e.g. react-native-web shims) have no file on disk and no place in a report.
+    if (!local.startsWith(`${root}/`) || local.includes('\0')) continue;
     const entry = { ...fc, path: local };
     if (out[local]) {
       out[local] = mergeInto({ [local]: out[local] }, { [local]: entry })[local];

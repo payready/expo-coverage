@@ -5,7 +5,6 @@ const path = require('node:path');
 
 /**
  * Wraps a Metro config. When EXPO_COVERAGE=1 it
- *  - starts the coverage runtime before your entry file, so the app needs no code changes,
  *  - answers `POST /__coverage` on the dev server and merges maps into <projectRoot>/.expo-coverage,
  *  - keys Metro's cache on the flag so instrumented and plain bundles never mix.
  * Otherwise it returns the config untouched.
@@ -16,16 +15,11 @@ function withCoverage(config, options = {}) {
   if (process.env.EXPO_COVERAGE !== '1') return config;
   const root = config.projectRoot || process.cwd();
   const dir = path.resolve(root, options.dir || '.expo-coverage');
-  const previousRunBefore = config.serializer && config.serializer.getModulesRunBeforeMainModule;
   const previousEnhance = config.server && config.server.enhanceMiddleware;
 
   return {
     ...config,
     cacheVersion: `${config.cacheVersion || '1'}+expo-coverage`,
-    serializer: {
-      ...config.serializer,
-      getModulesRunBeforeMainModule: (entry) => [...(previousRunBefore ? previousRunBefore(entry) : []), require('path').join(__dirname, 'dist', 'autostart.js')],
-    },
     server: {
       ...config.server,
       enhanceMiddleware: (middleware, server) => {
@@ -39,19 +33,29 @@ function withCoverage(config, options = {}) {
   };
 }
 
+function mergeFile(a, b) {
+  const sum = (x = {}, y = {}) => {
+    const out = { ...x };
+    for (const [k, v] of Object.entries(y)) out[k] = (out[k] || 0) + v;
+    return out;
+  };
+  const branches = { ...a.b };
+  for (const [k, v] of Object.entries(b.b || {})) branches[k] = branches[k] ? v.map((n, i) => n + (branches[k][i] || 0)) : v;
+  return { ...a, s: sum(a.s, b.s), f: sum(a.f, b.f), b: branches };
+}
+
 function collect(req, res, dir) {
   const platform = new URL(req.url, 'http://localhost').searchParams.get('platform') || 'unknown';
   const chunks = [];
   req.on('data', (c) => chunks.push(c));
   req.on('end', () => {
     try {
-      const { createCoverageMap } = require('istanbul-lib-coverage');
       const file = path.join(dir, `coverage-${platform}.json`);
-      const map = createCoverageMap({});
-      if (fs.existsSync(file)) map.merge(JSON.parse(fs.readFileSync(file, 'utf8')));
-      map.merge(JSON.parse(Buffer.concat(chunks).toString('utf8')));
+      const map = fs.existsSync(file) ? JSON.parse(fs.readFileSync(file, 'utf8')) : {};
+      const incoming = JSON.parse(Buffer.concat(chunks).toString('utf8'));
+      for (const [name, fc] of Object.entries(incoming)) map[name] = map[name] ? mergeFile(map[name], fc) : fc;
       fs.mkdirSync(dir, { recursive: true });
-      fs.writeFileSync(file, JSON.stringify(map.toJSON()));
+      fs.writeFileSync(file, JSON.stringify(map));
       res.statusCode = 204;
     } catch (error) {
       console.error('expo-coverage: ignored post:', error.message);

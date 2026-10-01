@@ -1,0 +1,8 @@
+appId: dev.example.tictactoe
+---
+- launchApp
+- tapOn: "Play the computer"
+- tapOn:
+    id: cell-0
+- assertVisible: "X's turn"
+- tapOn: "New game"

@@ -1,0 +1,13 @@
+{
+  "expo": {
+    "name": "Tic Tac Toe",
+    "slug": "tic-tac-toe",
+    "version": "1.0.0",
+    "scheme": "tictactoe",
+    "orientation": "portrait",
+    "ios": { "bundleIdentifier": "dev.example.tictactoe" },
+    "android": { "package": "dev.example.tictactoe" },
+    "web": { "bundler": "metro" },
+    "plugins": ["expo-coverage/app.plugin"]
+  }
+}

@@ -34,6 +34,8 @@ export function FolderMap({ files, tab, folder, onFolder }: { files: FileEntry[]
         sort={false}
         aspectRatio={1.9}
         gap={3}
+        animationDuration={0}
+        staggerDelay={0}
         activeIndex={active}
         onActiveIndexChange={(i: number) => onFolder(i >= 0 ? (tiles[i]?.name ?? null) : null)}
       >

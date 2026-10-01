@@ -1,0 +1,35 @@
+{
+  "name": "tic-tac-toe-example",
+  "private": true,
+  "version": "0.0.0",
+  "main": "index.js",
+  "scripts": {
+    "start": "expo start",
+    "web": "expo start --web",
+    "test:web": "playwright test",
+    "coverage:web": "expo-coverage run -- playwright test",
+    "report": "expo-coverage report --open"
+  },
+  "dependencies": {
+    "expo": "~57.0.26",
+    "react": "19.2.3",
+    "react-dom": "19.2.3",
+    "react-native": "0.86.3",
+    "react-native-web": "^0.21.3",
+    "@expo/metro-runtime": "*"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.25.0",
+    "@playwright/test": "1.60.0",
+    "@types/react": "^19.3.0",
+    "babel-preset-expo": "^57.0.13",
+    "expo-coverage": "file:../../.tmp/expo-coverage-0.1.0.tgz",
+    "expo-coverage": "file:../../.tmp/expo-coverage-0.1.0.tgz",
+    "expo-coverage": "file:../../.tmp/expo-coverage-0.1.0.tgz",
+    "expo-coverage": "file:../../.tmp/expo-coverage-0.1.0.tgz",
+    "typescript": "~6.0.3"
+  },
+  "overrides": {
+    "baseline-browser-mapping": "2.11.26"
+  }
+}
