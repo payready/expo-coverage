@@ -28,7 +28,18 @@ export function Hero({ files, tab }: { files: FileEntry[]; tab: Tab }) {
           strokeWidth={16}
         >
           <RingChart.Ring index={0} />
-          <RingChart.Center />
+          <RingChart.Center>
+            {() => (
+              <>
+                <Text className="text-3xl font-semibold text-foreground" numberOfLines={1}>
+                  {value.toFixed(1)}%
+                </Text>
+                <Text className="text-xs text-muted-foreground" numberOfLines={1}>
+                  line coverage
+                </Text>
+              </>
+            )}
+          </RingChart.Center>
         </RingChart>
         <Text className="mt-3 text-center text-muted-foreground">
           {fmt(lines[0])} of {fmt(lines[1])} lines{'\n'}
@@ -40,7 +51,7 @@ export function Hero({ files, tab }: { files: FileEntry[]; tab: Tab }) {
           const ratio = totals(files, tab, key);
           const v = pct(ratio);
           return (
-            <Card key={key} className="flex-1 gap-2 p-4" style={{ minWidth: 200 }}>
+            <Card key={key} className="gap-2 p-4" style={{ flexGrow: 1, flexBasis: '47%', minWidth: 200 }}>
               <Kpi>
                 <Kpi.Header>
                   <Kpi.Title>{label}</Kpi.Title>
