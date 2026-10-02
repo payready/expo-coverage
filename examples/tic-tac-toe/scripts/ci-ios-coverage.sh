@@ -24,6 +24,7 @@ patch_rn_codegen_script() {
   python3 - "$script" <<'PY'
 from pathlib import Path
 import sys
+
 path = Path(sys.argv[1])
 text = path.read_text()
 needle = "withCodegenDiscovery () {\n    find_node\n    find_codegen\n    generateArtifacts\n}"
@@ -39,11 +40,19 @@ insert = """withCodegenDiscovery () {
 }"""
 if needle not in text:
     raise SystemExit(f"could not patch {path}: withCodegenDiscovery block not found")
-path.write_text(text.replace(needle, insert, 1))
+text = text.replace(needle, insert, 1)
+old_done = 'echo \'Done.\' >> "${SCRIPT_OUTPUT_FILE_0}" 2>&1'
+new_done = (
+    'if [ -n "${SCRIPT_OUTPUT_FILE_0:-}" ]; then '
+    'mkdir -p "$(dirname "$SCRIPT_OUTPUT_FILE_0")"; '
+    'echo Done. >> "$SCRIPT_OUTPUT_FILE_0" 2>&1 || true; '
+    'else echo Done.; fi'
+)
+if old_done not in text:
+    raise SystemExit(f"could not patch {path}: Done echo not found")
+path.write_text(text.replace(old_done, new_done, 1))
 print(f"patched {path}")
 PY
-  # Final Done line must not fail the phase if the log path is still missing.
-  perl -i -0pe 's/echo '\''Done\.'\'' >> "\$\{SCRIPT_OUTPUT_FILE_0\}" 2>&1/if [ -n "${SCRIPT_OUTPUT_FILE_0:-}" ]; then mkdir -p "$(dirname "$SCRIPT_OUTPUT_FILE_0")"; echo Done. >> "$SCRIPT_OUTPUT_FILE_0" 2>&1 || true; else echo Done.; fi/s' "$script"
 }
 
 bunx expo prebuild --platform ios --non-interactive --no-install
