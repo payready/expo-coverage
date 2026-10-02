@@ -50,6 +50,6 @@ There's also an MCP server (`bunx expo-coverage mcp`). See [docs/agents.md](docs
 - JavaScript only. Native Swift, Kotlin and Java aren't measured.
 - Needs an instrumented build. The flag keeps it out of production.
 - Screens your tests never load don't appear (they're missing, not 0%).
-- Verified on web and iOS. Android uses the same runtime but hasn't been run yet.
+- Verified on web, iOS, and Android via the `demo-e2e` workflow (merged report artifact).
 
 MIT © Pay Ready

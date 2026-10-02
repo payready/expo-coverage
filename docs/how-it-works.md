@@ -10,5 +10,5 @@
 - **JavaScript only.** Native Swift, Kotlin and Java code is not measured.
 - **Dev and instrumented builds.** Instrumented code is slower and bigger. Do not ship it. The flag keeps it out of normal builds.
 - **Files the app never loads are not listed.** Coverage comes from loaded modules, so a screen your tests never reach will be missing rather than shown as 0%.
-- **Verified on web and iOS.** The demo's Playwright specs and Maestro flows have run against a real iOS 26 simulator (dev build). Android uses the same runtime and has not been run yet, so treat it as untested.
+- **Verified on web, iOS, and Android in CI.** [`demo-e2e.yml`](../.github/workflows/demo-e2e.yml) merges all three into one `demo-coverage-report` artifact.
 - **Dev servers.** In dev builds the app finds Metro on its own. For release or prebuilt apps, bake `EXPO_PUBLIC_COVERAGE_URL` and use `expo-coverage serve`.

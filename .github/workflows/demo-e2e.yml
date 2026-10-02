@@ -1,16 +1,23 @@
-# Runs the demo app's web specs with coverage on every PR (iOS/Android versions live in
-# examples/tic-tac-toe/workflows/e2e.yml for copying into your own app).
+# Dogfood: web + iOS + Android each upload coverage-*.json; report merges into one demo-coverage-report.
+# Uses bun + example:install and the local composite action (./), not an unpublished registry tag.
 name: demo-e2e
 on:
   pull_request:
   workflow_dispatch:
+
+env:
+  EXPO_COVERAGE: '1'
+  BUN_VERSION: '1.3.13'
+
 jobs:
   web:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
       - uses: oven-sh/setup-bun@v2
-        with: { bun-version: 1.3.13 }
+        with:
+          bun-version: ${{ env.BUN_VERSION }}
       - run: bun install
       - run: bun run build
       - run: bun run test
@@ -18,11 +25,133 @@ jobs:
       - run: bunx playwright install --with-deps chromium
       - working-directory: examples/tic-tac-toe
         run: bun run coverage:web
-      - name: Validate report styles (Chromium + WebKit)
-        run: |
-          bunx playwright install --with-deps webkit
-          node scripts/validate-report.mjs "$PWD/examples/tic-tac-toe/.expo-coverage/report.html"
       - uses: actions/upload-artifact@v4
         with:
-          name: demo-coverage-report
-          path: examples/tic-tac-toe/.expo-coverage/report.html
+          name: coverage-web
+          path: examples/tic-tac-toe/.expo-coverage/coverage-web.json
+          if-no-files-found: error
+
+  ios:
+    runs-on: macos-15
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: ${{ env.BUN_VERSION }}
+      - run: bun install
+      - run: bun run build
+      - run: bun run example:install
+      - name: Install Maestro
+        run: curl -Ls https://get.maestro.mobile.dev | bash && echo "$HOME/.maestro/bin" >> "$GITHUB_PATH"
+      - name: Build iOS sim app and run Maestro with coverage
+        working-directory: examples/tic-tac-toe
+        run: |
+          set -euo pipefail
+          EXPO_COVERAGE=1 bunx expo run:ios --configuration Debug --no-bundler
+          bunx expo start --port 8081 &
+          metro_pid=$!
+          cleanup() { kill "$metro_pid" 2>/dev/null || true; }
+          trap cleanup EXIT
+          for i in $(seq 1 60); do
+            curl -sf http://127.0.0.1:8081/status >/dev/null && break
+            sleep 2
+          done
+          bunx expo-coverage run -- maestro test .maestro
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coverage-ios
+          path: examples/tic-tac-toe/.expo-coverage/coverage-ios.json
+          if-no-files-found: error
+
+  android:
+    runs-on: ubuntu-latest
+    timeout-minutes: 75
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: ${{ env.BUN_VERSION }}
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - run: bun install
+      - run: bun run build
+      - run: bun run example:install
+      - name: Install Maestro
+        run: curl -Ls https://get.maestro.mobile.dev | bash && echo "$HOME/.maestro/bin" >> "$GITHUB_PATH"
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: Build Android app, run Maestro with coverage
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          arch: x86_64
+          profile: pixel_6
+          disable-animations: true
+          script: |
+            set -euo pipefail
+            cd examples/tic-tac-toe
+            EXPO_COVERAGE=1 bunx expo run:android --no-bundler
+            bunx expo start --port 8081 &
+            metro_pid=$!
+            cleanup() { kill "$metro_pid" 2>/dev/null || true; }
+            trap cleanup EXIT
+            for i in $(seq 1 90); do
+              curl -sf http://127.0.0.1:8081/status >/dev/null && break
+              sleep 2
+            done
+            bunx expo-coverage run -- maestro test .maestro
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coverage-android
+          path: examples/tic-tac-toe/.expo-coverage/coverage-android.json
+          if-no-files-found: error
+
+  report:
+    needs: [web, ios, android]
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: ${{ env.BUN_VERSION }}
+      - run: bun install
+      - run: bun run build
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: coverage-*
+          path: examples/tic-tac-toe/.expo-coverage
+          merge-multiple: true
+      - name: Require all three platform coverage files
+        run: |
+          set -euo pipefail
+          for p in web ios android; do
+            f="examples/tic-tac-toe/.expo-coverage/coverage-$p.json"
+            test -s "$f" || { echo "missing $f"; ls -la examples/tic-tac-toe/.expo-coverage || true; exit 1; }
+          done
+      - uses: ./
+        with:
+          directory: examples/tic-tac-toe/.expo-coverage
+          artifact-name: demo-coverage-report
+          package: ./packages/expo-coverage
+      - name: Validate report styles (Chromium + WebKit)
+        run: |
+          bunx playwright install --with-deps chromium webkit
+          node scripts/validate-report.mjs "$PWD/examples/tic-tac-toe/.expo-coverage/report.html"
+      - name: Confirm platform tabs in report
+        run: |
+          set -euo pipefail
+          html="examples/tic-tac-toe/.expo-coverage/report.html"
+          for label in iOS Android Web; do
+            grep -q "$label" "$html" || { echo "report.html missing tab label: $label"; exit 1; }
+          done
+          echo "report.html includes iOS, Android, and Web"

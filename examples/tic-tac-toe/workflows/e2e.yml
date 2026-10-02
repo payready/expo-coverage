@@ -1,5 +1,7 @@
 # Copy into your app's .github/workflows/. Web, iOS and Android each upload their raw coverage;
-# the last job merges them into one report and checks a floor.
+# the report job merges them into one report. This repo's dogfood run is .github/workflows/demo-e2e.yml
+# (bun + example:install + uses: ./). Until payready/expo-coverage is on the registry, replace the
+# report step with uses: ./ and package: ./packages/expo-coverage, or bunx expo-coverage report.
 name: e2e
 on:
   pull_request:
@@ -76,6 +78,9 @@ jobs:
           pattern: coverage-*
           path: .expo-coverage
           merge-multiple: true
+      # Prefer a published tag once available. In this monorepo use:
+      #   uses: ./
+      #   with: { directory: .expo-coverage, package: ./packages/expo-coverage }
       - uses: payready/expo-coverage@v0
         with:
           fail-under: 60
