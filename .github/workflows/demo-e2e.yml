@@ -8,6 +8,7 @@ on:
 env:
   EXPO_COVERAGE: '1'
   BUN_VERSION: '1.3.13'
+  CI: '1'
 
 jobs:
   web:
@@ -45,19 +46,7 @@ jobs:
       - name: Install Maestro
         run: curl -Ls https://get.maestro.mobile.dev | bash && echo "$HOME/.maestro/bin" >> "$GITHUB_PATH"
       - name: Build iOS sim app and run Maestro with coverage
-        working-directory: examples/tic-tac-toe
-        run: |
-          set -euo pipefail
-          EXPO_COVERAGE=1 bunx expo run:ios --configuration Debug --no-bundler
-          bunx expo start --port 8081 &
-          metro_pid=$!
-          cleanup() { kill "$metro_pid" 2>/dev/null || true; }
-          trap cleanup EXIT
-          for i in $(seq 1 60); do
-            curl -sf http://127.0.0.1:8081/status >/dev/null && break
-            sleep 2
-          done
-          bunx expo-coverage run -- maestro test .maestro
+        run: bash examples/tic-tac-toe/scripts/ci-ios-coverage.sh
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -94,21 +83,8 @@ jobs:
           arch: x86_64
           profile: pixel_6
           disable-animations: true
-          # emulator-runner invokes /bin/sh (dash); use bash for pipefail/arrays.
-          script: |
-            bash -euo pipefail <<'SCRIPT'
-            cd examples/tic-tac-toe
-            EXPO_COVERAGE=1 bunx expo run:android --no-bundler
-            bunx expo start --port 8081 &
-            metro_pid=$!
-            cleanup() { kill "$metro_pid" 2>/dev/null || true; }
-            trap cleanup EXIT
-            for i in $(seq 1 90); do
-              curl -sf http://127.0.0.1:8081/status >/dev/null && break
-              sleep 2
-            done
-            bunx expo-coverage run -- maestro test .maestro
-            SCRIPT
+          # Must be one line: this action runs each YAML line as its own `sh -c`.
+          script: bash examples/tic-tac-toe/scripts/ci-android-coverage.sh
       - uses: actions/upload-artifact@v4
         if: always()
         with:
