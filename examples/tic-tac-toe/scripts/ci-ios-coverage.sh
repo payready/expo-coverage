@@ -122,8 +122,14 @@ pat = re.compile(
     r'shellScript = ")(.*?)(";\s*\})',
     re.S,
 )
-# pbxproj stores the script with \n escapes; keep the body free of bare `(...)`.
-noop = "echo expo-coverage: Generate Specs no-op\\nexit 0\\n"
+# pbxproj stores the script with \n escapes. Create the declared outputPath so
+# Xcode does not fail the phase for a missing react-codegen.log.
+noop = (
+    "mkdir -p \\\"${DERIVED_FILE_DIR:-/tmp}\\\"\\n"
+    "touch \\\"${DERIVED_FILE_DIR:-/tmp}/react-codegen.log\\\"\\n"
+    "echo expo-coverage: Generate Specs no-op\\n"
+    "exit 0\\n"
+)
 m = pat.search(text)
 if not m:
     raise SystemExit("Generate Specs shellScript not found in Pods.xcodeproj")
