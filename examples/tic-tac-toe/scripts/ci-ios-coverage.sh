@@ -152,21 +152,55 @@ done
 echo "Warming iOS bundle…"
 curl -sf "http://127.0.0.1:8081/index.bundle?platform=ios&dev=true&minify=false" -o /dev/null
 
+# Bypass `expo run:ios` — on GHA it exits 65 with an opaque
+# "Could not resolve package dependencies" after codegen already succeeded.
+boot_sim() {
+  xcrun simctl list devices available -j | python3 -c '
+import json, sys
+devs = json.load(sys.stdin)["devices"]
+for runtime, devices in devs.items():
+    if "iOS" not in runtime:
+        continue
+    for d in devices:
+        if d.get("isAvailable") and "iPhone" in d.get("name", ""):
+            print(d["udid"])
+            raise SystemExit
+raise SystemExit("no iPhone simulator")
+'
+}
+
+SIM_UDID="$(boot_sim)"
+echo "Using simulator $SIM_UDID"
+xcrun simctl boot "$SIM_UDID" 2>/dev/null || true
+xcrun simctl bootstatus "$SIM_UDID" -b
+
 set +e
-bunx expo run:ios --configuration Debug --no-bundler --no-install
-ios_build=$?
+xcodebuild \
+  -workspace ios/TicTacToe.xcworkspace \
+  -scheme TicTacToe \
+  -configuration Debug \
+  -destination "platform=iOS Simulator,id=${SIM_UDID}" \
+  -derivedDataPath ios/DerivedData \
+  ONLY_ACTIVE_ARCH=YES \
+  EXCLUDED_ARCHS=x86_64 \
+  CODE_SIGNING_ALLOWED=NO \
+  COMPILER_INDEX_STORE_ENABLE=NO \
+  build 2>&1 | tee ios/xcodebuild-ci.log
+ios_build=${PIPESTATUS[0]}
 set -e
 if [[ "$ios_build" -ne 0 ]]; then
+  echo "::group::xcodebuild errors"
+  rg -n "error:|fatal|SwiftCompile failed|❌" ios/xcodebuild-ci.log | tail -80 || true
+  echo "::endgroup::"
   dump_xcode_failure_logs
-  # Full xcodebuild log for the next diagnosis cycle
-  set +e
-  xcodebuild -workspace ios/TicTacToe.xcworkspace -scheme TicTacToe \
-    -configuration Debug -destination 'generic/platform=iOS Simulator' \
-    -derivedDataPath ios/DerivedData build 2>&1 | tee ios/xcodebuild-ci.log | tail -80
-  set -e
-  echo "expo run:ios failed (exit $ios_build)" >&2
+  echo "xcodebuild failed (exit $ios_build)" >&2
   exit "$ios_build"
 fi
+
+APP="$(find ios/DerivedData/Build/Products -name 'TicTacToe.app' -type d | head -1)"
+test -n "$APP" || { echo "TicTacToe.app not found under DerivedData" >&2; exit 1; }
+xcrun simctl install "$SIM_UDID" "$APP"
+xcrun simctl launch "$SIM_UDID" dev.example.tictactoe
 sleep 5
 
 set +e
