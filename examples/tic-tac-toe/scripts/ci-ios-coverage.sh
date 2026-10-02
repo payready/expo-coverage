@@ -11,8 +11,49 @@ if ! command -v node >/dev/null 2>&1; then
   exit 1
 fi
 
+# RN's withCodegenDiscovery path never mkdir's SCRIPT_OUTPUT_FILE_0's parent
+# (DERIVED_FILE_DIR). The final `echo Done >> "$SCRIPT_OUTPUT_FILE_0"` then
+# fails under `set -e` after codegen already printed Done — Expo reports that
+# as "[CP-User] Generate Specs failed". Harden before xcodebuild runs it.
+patch_rn_codegen_script() {
+  local script="node_modules/react-native/scripts/react_native_pods_utils/script_phases.sh"
+  test -f "$script" || { echo "missing $script" >&2; return 1; }
+  if grep -q 'expo-coverage: ensure SCRIPT_OUTPUT_FILE_0' "$script"; then
+    return 0
+  fi
+  python3 - "$script" <<'PY'
+from pathlib import Path
+import sys
+path = Path(sys.argv[1])
+text = path.read_text()
+needle = "withCodegenDiscovery () {\n    find_node\n    find_codegen\n    generateArtifacts\n}"
+insert = """withCodegenDiscovery () {
+    # expo-coverage: ensure SCRIPT_OUTPUT_FILE_0 dir exists (Xcode outputPaths)
+    if [ -n "${SCRIPT_OUTPUT_FILE_0:-}" ]; then
+        mkdir -p "$(dirname "$SCRIPT_OUTPUT_FILE_0")"
+        : > "$SCRIPT_OUTPUT_FILE_0"
+    fi
+    find_node
+    find_codegen
+    generateArtifacts
+}"""
+if needle not in text:
+    raise SystemExit(f"could not patch {path}: withCodegenDiscovery block not found")
+path.write_text(text.replace(needle, insert, 1))
+print(f"patched {path}")
+PY
+  # Final Done line must not fail the phase if the log path is still missing.
+  perl -i -0pe 's/echo '\''Done\.'\'' >> "\$\{SCRIPT_OUTPUT_FILE_0\}" 2>&1/if [ -n "${SCRIPT_OUTPUT_FILE_0:-}" ]; then mkdir -p "$(dirname "$SCRIPT_OUTPUT_FILE_0")"; echo Done. >> "$SCRIPT_OUTPUT_FILE_0" 2>&1 || true; else echo Done.; fi/s' "$script"
+}
+
 bunx expo prebuild --platform ios --non-interactive --no-install
-echo "export NODE_BINARY=$(command -v node)" > ios/.xcode.env.local
+NODE_BIN="$(command -v node)"
+# Absolute path so Xcode script phases do not rely on a bare `node` on PATH.
+{
+  echo "export NODE_BINARY=${NODE_BIN}"
+  echo "export PATH=\"$(dirname "$NODE_BIN"):\$PATH\""
+} > ios/.xcode.env.local
+patch_rn_codegen_script
 (cd ios && pod install)
 
 bunx expo start --port 8081 &
