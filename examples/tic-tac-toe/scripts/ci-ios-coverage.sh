@@ -104,6 +104,35 @@ NODE_BIN="$(command -v node)"
 patch_rn_codegen_for_ci
 (cd ios && pod install)
 
+# Xcode still marks [CP-User] Generate Specs as failed on GHA even after codegen
+# prints Done (Expo then aborts the build). CocoaPods already generated the
+# artifacts during `pod install`; turn the phase into a no-op so the app builds.
+noop_generate_specs_phase() {
+  python3 - <<'PY'
+from pathlib import Path
+import re
+pbx = Path("ios/Pods/Pods.xcodeproj/project.pbxproj")
+text = pbx.read_text()
+# Replace only the Generate Specs shellScript body.
+pat = re.compile(
+    r'(name = "\[CP-User\] Generate Specs";\s*'
+    r'outputPaths = \(\s*"[^"]+"\s*,\s*\);\s*'
+    r"runOnlyForDeploymentPostprocessing = 0;\s*"
+    r"shellPath = /bin/sh;\s*"
+    r'shellScript = ")(.*?)(";\s*\})',
+    re.S,
+)
+noop = r"echo expo-coverage: Generate Specs no-op \\(artifacts from pod install\\)\\nexit 0\n"
+m = pat.search(text)
+if not m:
+    raise SystemExit("Generate Specs shellScript not found in Pods.xcodeproj")
+text = pat.sub(m.group(1) + noop + m.group(3), text, count=1)
+pbx.write_text(text)
+print("Generate Specs phase set to no-op")
+PY
+}
+noop_generate_specs_phase
+
 bunx expo start --port 8081 &
 metro_pid=$!
 cleanup() { kill "$metro_pid" 2>/dev/null || true; }
@@ -122,6 +151,12 @@ ios_build=$?
 set -e
 if [[ "$ios_build" -ne 0 ]]; then
   dump_xcode_failure_logs
+  # Full xcodebuild log for the next diagnosis cycle
+  set +e
+  xcodebuild -workspace ios/TicTacToe.xcworkspace -scheme TicTacToe \
+    -configuration Debug -destination 'platform=iOS Simulator,name=iPhone 16' \
+    -derivedDataPath ios/DerivedData build 2>&1 | tee ios/xcodebuild-ci.log | tail -80
+  set -e
   echo "expo run:ios failed (exit $ios_build)" >&2
   exit "$ios_build"
 fi
