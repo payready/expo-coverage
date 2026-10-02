@@ -40,6 +40,10 @@ jobs:
       - uses: oven-sh/setup-bun@v2
         with:
           bun-version: ${{ env.BUN_VERSION }}
+      # Xcode codegen script phases invoke `node`; bun alone is not enough.
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
       - run: bun install
       - run: bun run build
       - run: bun run example:install
