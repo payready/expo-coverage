@@ -94,8 +94,9 @@ jobs:
           arch: x86_64
           profile: pixel_6
           disable-animations: true
+          # emulator-runner invokes /bin/sh (dash); use bash for pipefail/arrays.
           script: |
-            set -euo pipefail
+            bash -euo pipefail <<'SCRIPT'
             cd examples/tic-tac-toe
             EXPO_COVERAGE=1 bunx expo run:android --no-bundler
             bunx expo start --port 8081 &
@@ -107,6 +108,7 @@ jobs:
               sleep 2
             done
             bunx expo-coverage run -- maestro test .maestro
+            SCRIPT
       - uses: actions/upload-artifact@v4
         if: always()
         with:
