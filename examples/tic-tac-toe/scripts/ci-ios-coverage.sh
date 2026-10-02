@@ -154,7 +154,7 @@ if [[ "$ios_build" -ne 0 ]]; then
   # Full xcodebuild log for the next diagnosis cycle
   set +e
   xcodebuild -workspace ios/TicTacToe.xcworkspace -scheme TicTacToe \
-    -configuration Debug -destination 'platform=iOS Simulator,name=iPhone 16' \
+    -configuration Debug -destination 'generic/platform=iOS Simulator' \
     -derivedDataPath ios/DerivedData build 2>&1 | tee ios/xcodebuild-ci.log | tail -80
   set -e
   echo "expo run:ios failed (exit $ios_build)" >&2
