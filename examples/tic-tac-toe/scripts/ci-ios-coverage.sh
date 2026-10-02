@@ -122,7 +122,8 @@ pat = re.compile(
     r'shellScript = ")(.*?)(";\s*\})',
     re.S,
 )
-noop = r"echo expo-coverage: Generate Specs no-op \\(artifacts from pod install\\)\\nexit 0\n"
+# pbxproj stores the script with \n escapes; keep the body free of bare `(...)`.
+noop = "echo expo-coverage: Generate Specs no-op\\nexit 0\\n"
 m = pat.search(text)
 if not m:
     raise SystemExit("Generate Specs shellScript not found in Pods.xcodeproj")
