@@ -86,9 +86,9 @@ dump_xcode_failure_logs() {
   find "$HOME/Library/Developer/Xcode/DerivedData" ios/build -name '*.log' 2>/dev/null \
     | head -40 \
     | while read -r f; do
-        if rg -q "error:|Could not resolve|Generate Specs|Package\.swift" "$f" 2>/dev/null; then
+        if grep -Eiq "error:|Could not resolve|Generate Specs|Package\.swift|Swift tools" "$f" 2>/dev/null; then
           echo "---- $f ----"
-          rg -n "error:|Could not resolve|Generate Specs|Package\.swift|❌" "$f" | tail -40 || true
+          grep -Ein "error:|Could not resolve|Generate Specs|Package\.swift|Swift tools|❌" "$f" | tail -40 || true
         fi
       done || true
   echo "::endgroup::"
@@ -190,7 +190,7 @@ ios_build=${PIPESTATUS[0]}
 set -e
 if [[ "$ios_build" -ne 0 ]]; then
   echo "::group::xcodebuild errors"
-  rg -n "error:|fatal|SwiftCompile failed|❌" ios/xcodebuild-ci.log | tail -80 || true
+  grep -Ein "error:|fatal|SwiftCompile failed|Swift tools|❌" ios/xcodebuild-ci.log | tail -80 || true
   echo "::endgroup::"
   dump_xcode_failure_logs
   echo "xcodebuild failed (exit $ios_build)" >&2
