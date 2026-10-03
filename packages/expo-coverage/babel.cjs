@@ -10,6 +10,7 @@
  */
 const fs = require('node:fs');
 const path = require('node:path');
+const { DEFAULT_EXCLUDE } = require('./instrument-globs.cjs');
 
 /** Absolute path of the app's entry file: the `entry` option, else package.json "main", else index.js. */
 function resolveEntry(cwd, entry) {
@@ -64,8 +65,8 @@ module.exports = function expoCoveragePreset(api, options = {}) {
         {
           cwd,
           include: options.include,
-          // test-exclude's defaults already skip node_modules and *.test.* files.
-          exclude: ['**/node_modules/**', '**/*.test.*', '**/*.spec.*', '**/__tests__/**', '**/e2e/**', '**/.expo/**', '**/.expo-coverage/**', ...(options.exclude || [])],
+          // Shared with `report --all` inventory (instrument-globs.cjs).
+          exclude: [...DEFAULT_EXCLUDE, ...(options.exclude || [])],
         },
       ],
       injectRuntime(resolveEntry(cwd, options.entry)),

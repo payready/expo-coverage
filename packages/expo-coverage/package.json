@@ -28,6 +28,7 @@
     "./autostart": "./dist/autostart.js",
     "./babel": "./babel.cjs",
     "./metro": "./metro.cjs",
+    "./instrument-globs": "./instrument-globs.cjs",
     "./playwright": {
       "types": "./dist/playwright.d.ts",
       "default": "./dist/playwright.js"
@@ -35,7 +36,7 @@
     "./app.plugin": "./app.plugin.js",
     "./package.json": "./package.json"
   },
-  "files": ["dist", "assets", "babel.cjs", "metro.cjs", "app.plugin.js", "README.md", "LICENSE"],
+  "files": ["dist", "assets", "babel.cjs", "metro.cjs", "app.plugin.js", "instrument-globs.cjs", "README.md", "LICENSE"],
   "scripts": {
     "build": "bun run scripts/build.ts",
     "test": "bun test",

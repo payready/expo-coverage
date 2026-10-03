@@ -19,6 +19,8 @@ jobs:
       - uses: payready/expo-coverage@v0
         with:
           fail-under: 70
+          # Optional: count unloaded source files as 0% (Istanbul --all)
+          # all: true
 ```
 
 The composite action builds the report, uploads it as an artifact and writes the numbers to the job summary. `fail-under` is optional.

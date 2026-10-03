@@ -1,6 +1,7 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { extname, join, relative } from 'node:path';
 import { createHighlighter, type BundledLanguage } from 'shiki';
+import { buildInventoryBaseline, fillMissing } from './inventory';
 import { coverageFile } from './paths';
 import { rehome } from './merge';
 import { readMeta } from './meta';
@@ -16,6 +17,11 @@ export interface BuildOptions {
   title?: string;
   /** Skip syntax highlighting (fast; used by queries that never render source). */
   highlight?: boolean;
+  /**
+   * Istanbul `--all` style: every file matching the instrumentation include/exclude
+   * starts at 0% until hits arrive, so unloaded modules pull the overall % down.
+   */
+  all?: boolean;
 }
 
 export function platformsPresent(root: string, dir?: string): Platform[] {
@@ -28,12 +34,15 @@ export async function buildCoverageData(opts: BuildOptions): Promise<CoverageDat
   const present = platformsPresent(root, dir);
   if (!present.length) throw new Error(`No coverage found in ${join(root, dir ?? '.expo-coverage')}. Run your tests with EXPO_COVERAGE=1 first.`);
 
+  const inventory = opts.all ? buildInventoryBaseline(root) : null;
+
   const maps = {} as Record<Platform, RawCoverage>;
   const all: RawCoverage = {};
   for (const p of present) {
-    const raw = rehome(root, JSON.parse(readFileSync(coverageFile(root, p, dir), 'utf8')));
-    maps[p] = raw as RawCoverage;
-    mergeInto(all, structuredClone(raw) as RawCoverage);
+    let raw = rehome(root, JSON.parse(readFileSync(coverageFile(root, p, dir), 'utf8'))) as RawCoverage;
+    if (inventory) raw = fillMissing(raw, inventory);
+    maps[p] = raw;
+    mergeInto(all, structuredClone(raw));
   }
 
   const files: FileEntry[] = [];
@@ -79,5 +88,14 @@ export async function buildCoverageData(opts: BuildOptions): Promise<CoverageDat
     highlighter.dispose();
   }
 
-  return { title: opts.title ?? 'End-to-end coverage', meta: readMeta(root), generated: new Date().toISOString(), platforms: present, files, sources, palette };
+  return {
+    title: opts.title ?? 'End-to-end coverage',
+    meta: readMeta(root),
+    generated: new Date().toISOString(),
+    platforms: present,
+    files,
+    sources,
+    palette,
+    inventory: Boolean(inventory),
+  };
 }

@@ -19,8 +19,11 @@ export const contextFrom = (p: Parsed, log = console.log): Ctx => ({ root: resol
 
 const tabOf = (p: Parsed): Tab => (str(p.flags.tab) as Tab | undefined) ?? 'all';
 
+const wantAll = (p: Parsed): boolean => Boolean(p.flags.all) || process.env.EXPO_COVERAGE_ALL === '1';
+
 /** `build` is the slow part (syntax highlighting); queries skip it. */
-export const load = (ctx: Ctx, highlight = false): Promise<CoverageData> => buildCoverageData({ root: ctx.root, dir: ctx.dir, highlight });
+export const load = (ctx: Ctx, p?: Parsed, highlight = false): Promise<CoverageData> =>
+  buildCoverageData({ root: ctx.root, dir: ctx.dir, highlight, all: p ? wantAll(p) : false });
 
 export function summaryLine(data: CoverageData): string {
   const s = query.summary(data);
@@ -44,12 +47,17 @@ export async function serve(ctx: Ctx, p: Parsed): Promise<void> {
 }
 
 export async function report(ctx: Ctx, p: Parsed): Promise<string> {
-  const data = await buildCoverageData({ root: ctx.root, dir: ctx.dir, title: str(p.flags.title) ?? 'End-to-end coverage' });
+  const data = await buildCoverageData({
+    root: ctx.root,
+    dir: ctx.dir,
+    title: str(p.flags.title) ?? 'End-to-end coverage',
+    all: wantAll(p),
+  });
   const out = resolve(ctx.root, str(p.flags.out) ?? reportFile(ctx.root, ctx.dir));
   writeReport(data, out);
   const s = query.summary(data);
   ctx.log(`Coverage  ${summaryLine(data)}`);
-  ctx.log(`${s.lines.covered}/${s.lines.total} lines · ${s.files} files · ${s.neverRan} never ran`);
+  ctx.log(`${s.lines.covered}/${s.lines.total} lines · ${s.files} files · ${s.neverRan} never ran${data.inventory ? ' · inventory --all' : ''}`);
   ctx.log(`Report    ${relative(process.cwd(), out)}`);
   if (process.env.GITHUB_STEP_SUMMARY) {
     appendFileSync(process.env.GITHUB_STEP_SUMMARY, `### E2E coverage\n\n| | Lines |\n|---|---|\n${Object.entries(s.byPlatform).map(([k, v]) => `| ${k} | ${v}% |`).join('\n')}\n\n`);
@@ -88,7 +96,7 @@ export async function run(ctx: Ctx, p: Parsed): Promise<number> {
 }
 
 export async function gapsCmd(ctx: Ctx, p: Parsed): Promise<void> {
-  const rows = query.gaps(await load(ctx), { tab: tabOf(p), top: Number(str(p.flags.top) ?? 10), under: str(p.flags.under) });
+  const rows = query.gaps(await load(ctx, p), { tab: tabOf(p), top: Number(str(p.flags.top) ?? 10), under: str(p.flags.under) });
   if (p.flags.json) return ctx.log(JSON.stringify(rows, null, 2));
   for (const g of rows) ctx.log(`${String(g.missedLines).padStart(5)} missed  ${String(Math.round(g.pct)).padStart(3)}%  ${g.file}  ${g.ranges.slice(0, 6).join(',')}`);
   if (!rows.length) ctx.log('No gaps.');
@@ -97,7 +105,7 @@ export async function gapsCmd(ctx: Ctx, p: Parsed): Promise<void> {
 export async function fileCmd(ctx: Ctx, p: Parsed): Promise<void> {
   const path = p.positionals[0];
   if (!path) throw new Error('Usage: expo-coverage file <path>');
-  const view = query.fileView(await load(ctx), ctx.root, path, tabOf(p));
+  const view = query.fileView(await load(ctx, p), ctx.root, path, tabOf(p));
   if (!view) throw new Error(`No coverage for ${path}`);
   if (p.flags.json) return ctx.log(JSON.stringify(view, null, 2));
   ctx.log(`${view.file}: ${view.pct.toFixed(1)}% · ${view.missedLines} lines missed`);
@@ -106,14 +114,14 @@ export async function fileCmd(ctx: Ctx, p: Parsed): Promise<void> {
 
 export async function diffCmd(ctx: Ctx, p: Parsed): Promise<void> {
   const base = p.positionals[0] ?? 'origin/main';
-  const report = query.diff(await load(ctx), query.changedLines(ctx.root, base), base, tabOf(p));
+  const report = query.diff(await load(ctx, p), query.changedLines(ctx.root, base), base, tabOf(p));
   if (p.flags.json) return ctx.log(JSON.stringify(report, null, 2));
   ctx.log(`Changed lines vs ${base}: ${report.executableChanged - report.uncoveredChanged}/${report.executableChanged} covered (${report.pct}%)`);
   for (const f of report.files) ctx.log(`  ${f.file}: ${f.uncoveredLines.join(', ')}`);
 }
 
 export async function summaryCmd(ctx: Ctx, p: Parsed): Promise<void> {
-  const s = query.summary(await load(ctx), tabOf(p));
+  const s = query.summary(await load(ctx, p), tabOf(p));
   ctx.log(p.flags.json ? JSON.stringify(s, null, 2) : `${s.lines.pct}% of ${s.lines.total} lines (${s.neverRan} of ${s.files} files never ran)`);
 }
 

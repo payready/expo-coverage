@@ -33,7 +33,7 @@ describe('babel preset', () => {
     const [plugin, options] = out.plugins[0];
     expect(plugin).toContain('babel-plugin-istanbul');
     expect(options.cwd).toBe(process.cwd());
-    expect(options.exclude).toEqual(expect.arrayContaining(['**/node_modules/**', '**/generated/**']));
+    expect(options.exclude).toEqual(expect.arrayContaining(['**/node_modules/**', '**/generated/**', '**/*.d.ts']));
   });
 
   test('actually instruments code through Babel', () => {

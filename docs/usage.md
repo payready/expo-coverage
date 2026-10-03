@@ -91,6 +91,14 @@ Every run writes `.expo-coverage/coverage-<platform>.json` and merges into what 
 bunx expo-coverage report --open
 ```
 
+### Inventory denominator (`--all`)
+
+By default the report only lists modules the app loaded, so % can look high when large parts of the tree were never imported. Pass `--all` (or set `EXPO_COVERAGE_ALL=1`) to build a baseline from every file matching the Babel instrumentation include/exclude — the same globs as `expo-coverage/babel` — and merge posts on top. Unloaded files appear at 0% and count in totals, never-ran, and biggest gaps.
+
+```bash
+bunx expo-coverage report --all --open
+```
+
 ## Next
 
 - [CI recipes](ci.md)
