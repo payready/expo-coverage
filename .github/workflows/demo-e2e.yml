@@ -146,4 +146,17 @@ jobs:
           for label in iOS Android Web; do
             grep -q "$label" "$html" || { echo "report.html missing tab label: $label"; exit 1; }
           done
-          echo "report.html includes iOS, Android, and Web"
+          # Platforms array alone is not enough — rehome used to drop macOS iOS paths on Linux.
+          node -e '
+            const html = require("fs").readFileSync("examples/tic-tac-toe/.expo-coverage/report.html", "utf8");
+            const m = html.match(/"platforms":\[(.*?)\]/);
+            if (!m) throw new Error("platforms array missing");
+            const platforms = JSON.parse("[" + m[1] + "]");
+            for (const p of ["ios", "android", "web"]) {
+              if (!platforms.includes(p)) throw new Error("missing platform " + p + ": " + m[0]);
+            }
+            for (const p of ["ios", "android", "web"]) {
+              if (!html.includes(`"${p}":{"l":`)) throw new Error("no line sums for " + p + " (rehome drop?)");
+            }
+            console.log("report.html has iOS/Android/Web tabs with line data:", platforms.join(","));
+          '
