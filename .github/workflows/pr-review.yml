@@ -1,0 +1,43 @@
+name: PR Review
+on:
+  pull_request:
+    types: [opened, ready_for_review, synchronize, reopened]
+  issue_comment:
+    types: [created]
+  pull_request_review_comment:
+    types: [created]
+
+permissions:
+  contents: read
+  pull-requests: write
+  id-token: write
+
+jobs:
+  review:
+    if: >-
+      github.event_name == 'pull_request' &&
+      github.event.pull_request.draft == false &&
+      !contains(github.event.pull_request.labels.*.name, 'skip-review')
+    concurrency:
+      group: pr-review-${{ github.repository }}-${{ github.event.pull_request.number }}
+      cancel-in-progress: true
+    uses: payready/agent-tools/.github/workflows/pr-review.yml@main
+    secrets: inherit
+
+  reply:
+    if: >-
+      (
+        github.event_name == 'issue_comment' &&
+        github.event.issue.pull_request &&
+        contains(github.event.comment.body, '@claude') &&
+        !contains(github.event.issue.labels.*.name, 'skip-review')
+      ) || (
+        github.event_name == 'pull_request_review_comment' &&
+        contains(github.event.comment.body, '@claude') &&
+        !contains(github.event.pull_request.labels.*.name, 'skip-review')
+      )
+    concurrency:
+      group: pr-reply-${{ github.repository }}-${{ github.event.pull_request.number || github.event.issue.number }}-${{ github.event.comment.id }}
+      cancel-in-progress: false
+    uses: payready/agent-tools/.github/workflows/pr-review-reply.yml@main
+    secrets: inherit
