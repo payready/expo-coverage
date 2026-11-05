@@ -1,6 +1,7 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { z } from 'zod';
+import { version } from '../../package.json';
 import * as query from '../core/query';
 import { TABS } from '../core/types';
 import type { Tab } from '../core/types';
@@ -12,7 +13,7 @@ const text = (value: unknown) => ({ content: [{ type: 'text' as const, text: typ
 
 /** Coverage as tools an agent can call: where are the gaps, what exactly is uncovered, did my change get tested. */
 export async function mcp(ctx: Ctx): Promise<void> {
-  const server = new McpServer({ name: 'expo-coverage', version: '0.2.0' });
+  const server = new McpServer({ name: 'expo-coverage', version });
 
   server.tool('coverage_summary', 'Overall line coverage, per platform (ios, android, web e2e and unit tests).', { tab }, async ({ tab }) => text(query.summary(await load(ctx), tab)));
 
