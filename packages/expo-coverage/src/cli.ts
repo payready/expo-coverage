@@ -1,15 +1,17 @@
 #!/usr/bin/env node
-import { fileCmd, gapsCmd, diffCmd, contextFrom, parseArgs, report, run, serve, summaryCmd } from './cli/commands';
+import { fileCmd, gapsCmd, diffCmd, contextFrom, importCmd, parseArgs, report, run, serve, summaryCmd } from './cli/commands';
 import { init } from './cli/init';
 import { mcp } from './cli/mcp';
 
-const HELP = `expo-coverage: e2e JS coverage for Expo apps (iOS, Android, web) in one report
+const HELP = `expo-coverage: JS coverage for Expo apps (iOS, Android, web e2e and unit tests) in one report
 
   init [--yes]            wire up Babel, Metro and the config plugin (shows the edits first)
   run -- <command>        collect coverage while <command> runs, then write the report
   serve [--port 9082]     collect from instrumented apps until stopped (prebuilt apps)
+  import <file>           merge unit-test coverage (Jest coverage-final.json or lcov.info)
+                          --platform unit (default), --exclude <glob> (repeatable)
   report [--open]         merge every platform into .expo-coverage/report.html
-  gaps [--top 10]         files with the most uncovered lines        (--json, --tab ios|android|web)
+  gaps [--top 10]         files with the most uncovered lines        (--json, --tab ios|android|web|unit)
   file <path>             uncovered ranges of one file, with source
   diff [base]             changed lines vs a git base that no test ran
   summary                 one-line numbers
@@ -39,6 +41,9 @@ async function main(): Promise<number> {
       return run(ctx, parsed);
     case 'serve':
       await serve(ctx, parsed);
+      return 0;
+    case 'import':
+      importCmd(ctx, parsed);
       return 0;
     case 'report':
     case 'combine':

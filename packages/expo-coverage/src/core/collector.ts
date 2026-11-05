@@ -16,7 +16,7 @@ export interface Collector {
   close: () => Promise<void>;
 }
 
-/** Receives `POST /__coverage?platform=<ios|android|web>` from instrumented apps and merges it into `<dir>/coverage-<platform>.json`. */
+/** Receives `POST /__coverage?platform=<ios|android|web>` (unit coverage arrives via `import`) from instrumented apps and merges it into `<dir>/coverage-<platform>.json`. */
 export function startCollector(opts: { root: string; dir?: string; port: number; host?: string }): Promise<Collector> {
   let posts = 0;
   const server = createServer((req, res) => {

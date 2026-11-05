@@ -11,9 +11,16 @@ describe('args', () => {
       command: 'run',
       positionals: [],
       flags: { port: '9000', open: true },
+      lists: { port: ['9000'] },
       rest: ['maestro', 'test', '.maestro'],
     });
     expect(parseArgs(['file', 'app/a.tsx', '--tab=ios']).positionals).toEqual(['app/a.tsx']);
+  });
+
+  test('repeatable flags keep every value', () => {
+    const p = parseArgs(['import', '--platform', 'unit', 'lcov.info', '--exclude', '**/*.test.ts', '--exclude=**/__mocks__/**']);
+    expect(p.positionals).toEqual(['lcov.info']);
+    expect(p.lists.exclude).toEqual(['**/*.test.ts', '**/__mocks__/**']);
   });
 });
 

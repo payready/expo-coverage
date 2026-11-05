@@ -3,10 +3,11 @@ import { appendFileSync } from 'node:fs';
 import { relative, resolve } from 'node:path';
 import { startCollector } from '../core/collector';
 import { buildCoverageData } from '../core/data';
+import { importCoverage } from '../core/import';
 import { DEFAULT_DIR, DEFAULT_PORT, reportFile } from '../core/paths';
 import * as query from '../core/query';
 import { writeReport } from '../core/report';
-import type { CoverageData, Tab } from '../core/types';
+import { PLATFORMS, PLATFORM_LABEL, TABS, type CoverageData, type Platform, type Tab } from '../core/types';
 import { parseArgs, str, type Parsed } from './args';
 
 export interface Ctx {
@@ -17,17 +18,20 @@ export interface Ctx {
 
 export const contextFrom = (p: Parsed, log = console.log): Ctx => ({ root: resolve(str(p.flags.root) ?? process.cwd()), dir: str(p.flags.dir) ?? DEFAULT_DIR, log });
 
-const tabOf = (p: Parsed): Tab => (str(p.flags.tab) as Tab | undefined) ?? 'all';
+function tabOf(p: Parsed): Tab {
+  const tab = str(p.flags.tab) ?? 'all';
+  if (!TABS.includes(tab as Tab)) throw new Error(`--tab must be one of ${TABS.join(', ')}`);
+  return tab as Tab;
+}
 
 /** `build` is the slow part (syntax highlighting); queries skip it. */
 export const load = (ctx: Ctx, highlight = false): Promise<CoverageData> => buildCoverageData({ root: ctx.root, dir: ctx.dir, highlight });
 
 export function summaryLine(data: CoverageData): string {
   const s = query.summary(data);
-  const names: Record<string, string> = { ios: 'iOS', android: 'Android', web: 'Web', all: 'All' };
   return Object.entries(s.byPlatform)
     .filter(([k]) => k !== 'all' || data.platforms.length > 1)
-    .map(([k, v]) => `${names[k]} ${v}%`)
+    .map(([k, v]) => `${PLATFORM_LABEL[k as Tab]} ${v}%`)
     .join('  ·  ');
 }
 
@@ -52,7 +56,7 @@ export async function report(ctx: Ctx, p: Parsed): Promise<string> {
   ctx.log(`${s.lines.covered}/${s.lines.total} lines · ${s.files} files · ${s.neverRan} never ran`);
   ctx.log(`Report    ${relative(process.cwd(), out)}`);
   if (process.env.GITHUB_STEP_SUMMARY) {
-    appendFileSync(process.env.GITHUB_STEP_SUMMARY, `### E2E coverage\n\n| | Lines |\n|---|---|\n${Object.entries(s.byPlatform).map(([k, v]) => `| ${k} | ${v}% |`).join('\n')}\n\n`);
+    appendFileSync(process.env.GITHUB_STEP_SUMMARY, `### E2E coverage\n\n| | Lines |\n|---|---|\n${Object.entries(s.byPlatform).map(([k, v]) => `| ${PLATFORM_LABEL[k as Tab]} | ${v}% |`).join('\n')}\n\n`);
   }
   if (p.flags.open) spawnSync(process.platform === 'darwin' ? 'open' : 'xdg-open', [out], { stdio: 'ignore' });
   return out;
@@ -85,6 +89,17 @@ export async function run(ctx: Ctx, p: Parsed): Promise<number> {
   if (posts === 0) ctx.log('expo-coverage: no coverage arrived. Is the app built with EXPO_COVERAGE=1 (see `expo-coverage init`)?');
   else await report(ctx, p);
   return code;
+}
+
+/** Merge a unit-test coverage file (Jest JSON or bun lcov) in as another platform. */
+export function importCmd(ctx: Ctx, p: Parsed): void {
+  const file = p.positionals[0];
+  const platform = str(p.flags.platform) ?? 'unit';
+  if (!file) throw new Error('Usage: expo-coverage import --platform unit <coverage-final.json|lcov.info> [--exclude <glob>]...');
+  if (!PLATFORMS.includes(platform as Platform)) throw new Error(`--platform must be one of ${PLATFORMS.join(', ')}`);
+  const r = importCoverage({ root: ctx.root, dir: ctx.dir, platform: platform as Platform, file, exclude: p.lists.exclude });
+  ctx.log(`Imported ${r.imported} files${r.excluded ? ` (${r.excluded} excluded)` : ''} into ${relative(process.cwd(), r.file)}`);
+  if (!r.imported) ctx.log('expo-coverage: nothing imported. Check --root and --exclude.');
 }
 
 export async function gapsCmd(ctx: Ctx, p: Parsed): Promise<void> {
