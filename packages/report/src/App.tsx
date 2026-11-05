@@ -31,7 +31,9 @@ export function App({ data }: { data: CoverageData }) {
           </View>
           <Files data={data} files={files} tab={tab} folder={folder} onFolder={setFolder} onOpen={setOpen} />
           <Text className="mt-8 text-center text-xs text-muted-foreground">
-            {data.files.length} files instrumented · files the app never loaded are not counted
+            {data.inventory
+              ? `${data.files.length} files in inventory · unloaded files count as 0% (--all)`
+              : `${data.files.length} files instrumented · files the app never loaded are not counted`}
           </Text>
         </View>
       </ScrollView>

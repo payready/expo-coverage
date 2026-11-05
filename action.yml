@@ -10,12 +10,18 @@ inputs:
   fail-under:
     description: Fail the job when overall line coverage is below this percentage.
     default: ''
+  all:
+    description: Use inventory denominator (Istanbul --all). Unloaded files count as 0%.
+    default: 'false'
   artifact-name:
     description: Name of the uploaded report artifact.
     default: expo-coverage-report
   version:
-    description: expo-coverage version to run.
+    description: expo-coverage version to run when package is unset.
     default: latest
+  package:
+    description: Local path or npm package specifier. When set, used instead of expo-coverage@version (dogfood with ./packages/expo-coverage).
+    default: ''
 outputs:
   percent:
     description: Overall line coverage percentage.
@@ -26,8 +32,20 @@ runs:
     - id: report
       shell: bash
       run: |
-        npx --yes expo-coverage@${{ inputs.version }} report --dir "${{ inputs.directory }}"
-        json="$(npx --yes expo-coverage@${{ inputs.version }} summary --json --dir "${{ inputs.directory }}")"
+        if [ -n "${{ inputs.package }}" ]; then
+          PKG="${{ inputs.package }}"
+        else
+          PKG="expo-coverage@${{ inputs.version }}"
+        fi
+        if [ -d "$PKG" ] || [[ "$PKG" == ./* ]] || [[ "$PKG" == /* ]]; then
+          RUN=(node "$PKG/dist/cli.js")
+        else
+          RUN=(npx --yes "$PKG")
+        fi
+        all_flag=""
+        if [ "${{ inputs.all }}" = "true" ]; then all_flag="--all"; fi
+        "${RUN[@]}" report --dir "${{ inputs.directory }}" $all_flag
+        json="$("${RUN[@]}" summary --json --dir "${{ inputs.directory }}" $all_flag)"
         percent="$(echo "$json" | node -e 'process.stdin.on("data",d=>console.log(JSON.parse(d).lines.pct))')"
         echo "percent=$percent" >> "$GITHUB_OUTPUT"
         {

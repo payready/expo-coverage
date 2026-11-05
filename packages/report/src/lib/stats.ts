@@ -1,6 +1,6 @@
 import type { CoverageData, FileEntry, Platform, Ratio, SumKey, Sums, Tab } from './types';
 
-export const LABEL: Record<Tab, string> = { ios: 'iOS', android: 'Android', web: 'Web', all: 'All' };
+export const LABEL: Record<Tab, string> = { ios: 'iOS', android: 'Android', web: 'Web', unit: 'Unit', all: 'All' };
 
 export const pct = ([covered, total]: Ratio): number => (total ? (covered / total) * 100 : 100);
 export const fmt = (n: number): string => n.toLocaleString();
@@ -50,18 +50,18 @@ export interface Overlap {
   none: number;
   all: number;
   some: number;
-  only: Record<Platform, number>;
+  only: Partial<Record<Platform, number>>;
 }
 
 /** For every executable line: which platforms ran it. */
 export function overlap(data: CoverageData): Overlap {
-  const result: Overlap = { none: 0, all: 0, some: 0, only: { ios: 0, android: 0, web: 0 } };
+  const result: Overlap = { none: 0, all: 0, some: 0, only: Object.fromEntries(data.platforms.map((p) => [p, 0])) };
   const n = data.platforms.length;
   for (const f of data.files) {
     for (const hits of Object.values(f.lc)) {
       const on = data.platforms.filter((_, i) => (hits[i] ?? 0) > 0);
       if (on.length === 0) result.none++;
-      else if (on.length === 1 && n > 1) result.only[on[0] as Platform]++;
+      else if (on.length === 1 && n > 1) result.only[on[0] as Platform] = (result.only[on[0] as Platform] ?? 0) + 1;
       else if (on.length === n) result.all++;
       else result.some++;
     }

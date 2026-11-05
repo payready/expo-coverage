@@ -11,15 +11,15 @@ export function OverlapBar({ data }: { data: CoverageData }) {
   const n = data.platforms.length;
   if (n < 2) return null;
   const parts = [
-    ...data.platforms.map((p) => ({ label: `Only ${LABEL[p]}`, count: o.only[p], color: PLATFORM[p] })),
-    ...(n > 2 ? [{ label: 'Two platforms', count: o.some, color: OVERLAP.some }] : []),
+    ...data.platforms.map((p) => ({ label: `Only ${LABEL[p]}`, count: o.only[p] ?? 0, color: PLATFORM[p] })),
+    ...(n > 2 ? [{ label: n === 3 ? 'Two platforms' : `2 to ${n - 1} platforms`, count: o.some, color: OVERLAP.some }] : []),
     { label: n === 2 ? 'Both' : `All ${n}`, count: o.all, color: HEALTH.good },
     { label: 'Not covered', count: o.none, color: HEALTH.bad },
   ].filter((p) => p.count > 0);
   return (
     <Card className="mb-5 p-6">
       <Text className="text-base font-semibold text-foreground">Who covers each line</Text>
-      <Text className="mb-4 text-muted-foreground">Every executable line, across every platform.</Text>
+      <Text className="mb-4 text-muted-foreground">Every executable line, across every platform{data.platforms.includes('unit') ? ' and unit tests' : ''}.</Text>
       <View className="mb-3 h-8 flex-row gap-0.5 overflow-hidden rounded-xl">
         {parts.map((p) => (
           <View key={p.label} style={{ flexGrow: p.count, minWidth: 3, backgroundColor: p.color }} />

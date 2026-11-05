@@ -6,7 +6,7 @@
 
 ## Why you'll like it
 
-- **One report for every platform.** A line counts as covered if any platform ran it, and you can see which one.
+- **One report for every platform.** iOS, Android and web e2e, plus your Jest or `bun test` unit coverage. A line counts as covered if any of them ran it, and you can see which one.
 - **Works with the tests you already have.** Maestro, Playwright, Detox. No rewrites.
 - **No changes to your app code.** Everything is off unless `EXPO_COVERAGE=1`, so normal builds are identical.
 - **One HTML file.** No server and no network. Open it from disk, attach it to CI, post it in Slack.
@@ -50,6 +50,6 @@ There's also an MCP server (`bunx expo-coverage mcp`). See [docs/agents.md](http
 - JavaScript only. Native Swift, Kotlin and Java aren't measured.
 - Needs an instrumented build. The flag keeps it out of production.
 - Screens your tests never load don't appear (they're missing, not 0%).
-- Verified on web and iOS. Android uses the same runtime but hasn't been run yet.
+- Verified on web, iOS, and Android via the `demo-e2e` workflow (merged report artifact).
 
 MIT © Pay Ready

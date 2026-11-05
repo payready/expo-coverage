@@ -2,7 +2,20 @@
 
 The report is one file, `.expo-coverage/report.html`. Raw data lives next to it as `coverage-<platform>.json`.
 
-## GitHub Actions: web
+## This repo: `demo-e2e` (web + iOS + Android)
+
+[`.github/workflows/demo-e2e.yml`](../.github/workflows/demo-e2e.yml) is the dogfood pipeline:
+
+1. **web** — Playwright `coverage:web` → `coverage-web.json`
+2. **ios** (`macos-15`) — Maestro on the simulator → `coverage-ios.json`
+3. **android** — Maestro on an emulator → `coverage-android.json`
+4. **report** (`if: always()`) — downloads `coverage-*`, builds the merged HTML with the local composite action (`uses: ./` + `package: ./packages/expo-coverage`), validates styles, uploads **`demo-coverage-report`**
+
+The artifact's `report.html` has **iOS / Android / Web / All** tabs when all three jobs produced JSON.
+
+Uses Bun, `bun run example:install`, and the in-repo action — not an unpublished `payready/expo-coverage@v0` tag.
+
+## GitHub Actions: web only (consumer snippet)
 
 ```yaml
 name: e2e
@@ -16,22 +29,27 @@ jobs:
       - run: bun install
       - run: bunx playwright install --with-deps chromium
       - run: bunx expo-coverage run -- bunx playwright test
-      - uses: payready/expo-coverage@v0
+      - uses: payready/expo-coverage@v0   # or uses: ./ while dogfooding this monorepo
         with:
           fail-under: 70
+          # Optional: count unloaded source files as 0% (Istanbul --all)
+          # all: true
 ```
 
-The composite action builds the report, uploads it as an artifact and writes the numbers to the job summary. `fail-under` is optional.
+The composite action builds the report, uploads it as an artifact and writes the numbers to the job summary. `fail-under` is optional. Pass `package: ./packages/expo-coverage` (after `bun run build`) when running the action from this repository before the package is published.
 
-Complete web + iOS + Android + merge workflows for the demo are in [examples/tic-tac-toe/workflows/e2e.yml](../examples/tic-tac-toe/workflows/e2e.yml), and [`demo-e2e.yml`](../.github/workflows/demo-e2e.yml) runs the web job on this repo.
+## Full three-platform merge (consumer template)
+
+Copy [examples/tic-tac-toe/workflows/e2e.yml](../examples/tic-tac-toe/workflows/e2e.yml) into your app. Web, iOS and Android each upload `coverage-*.json`; the **report** job merges them. Until `payready/expo-coverage` is published, point the report step at a local checkout (`uses: ./` with `package: ./packages/expo-coverage`) or run `bunx expo-coverage report` after installing the package.
 
 ## One report from several jobs
 
-Upload each job's `.expo-coverage` folder, download them into one directory, and run the action there. Files for the same platform add up, and different platforms sit side by side.
+Upload each job's coverage JSON, download them into one directory, and run the action there. Files for the same platform add up, and different platforms sit side by side.
 
 ```yaml
   report:
     needs: [web, ios, android]
+    if: always()
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

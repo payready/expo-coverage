@@ -83,9 +83,17 @@ export function Source({ data, path, tab, onClose }: { data: CoverageData; path:
           </Chip>
           <Chip onPress={() => jump()}>Next missed line (n)</Chip>
           <View className="flex-1" />
-          <Text className="text-muted-foreground">
-            {missCount} missed{dots ? ` · dots: ${data.platforms.map((p) => LABEL[p]).join(', ')}` : ''}
-          </Text>
+          <Text className="text-muted-foreground">{missCount} missed</Text>
+          {dots && (
+            <View className="flex-row flex-wrap items-center gap-x-2.5 gap-y-1" accessibilityLabel={`Dots show which ran each line: ${data.platforms.map((p) => LABEL[p]).join(', ')}`}>
+              {data.platforms.map((p) => (
+                <View key={p} className="flex-row items-center gap-1">
+                  <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: PLATFORM[p] }} />
+                  <Text className="text-xs text-muted-foreground">{LABEL[p]}</Text>
+                </View>
+              ))}
+            </View>
+          )}
         </View>
         {!lines ? (
           <Text className="p-9 text-center text-muted-foreground">Source file not found on the machine that built this report.</Text>
@@ -107,7 +115,7 @@ export function Source({ data, path, tab, onClose }: { data: CoverageData; path:
                   <View style={{ width: 82, flexDirection: 'row', justifyContent: 'flex-end', alignItems: 'center', gap: 4, paddingRight: 10 }}>
                     {dots &&
                       r.hits &&
-                      data.platforms.map((p, k) => <View key={p} style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: (r.hits?.[k] ?? 0) > 0 ? PLATFORM[p] : 'rgba(128,128,128,0.3)' }} />)}
+                      data.platforms.map((p, k) => <View key={p} accessibilityLabel={`${LABEL[p]} ${(r.hits?.[k] ?? 0) > 0 ? 'ran' : 'did not run'} this line`} style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: (r.hits?.[k] ?? 0) > 0 ? PLATFORM[p] : 'rgba(128,128,128,0.3)' }} />)}
                     <Text style={{ fontFamily: MONO, fontSize: 11, color: r.hit === 0 ? HEALTH.bad : undefined, fontWeight: r.hit === 0 ? '600' : '400' }} className="text-muted-foreground">
                       {r.hit === null ? '' : r.hit > 0 ? `${fmt(r.hit)}×` : '0'}
                     </Text>
