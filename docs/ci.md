@@ -13,7 +13,7 @@ The report is one file, `.expo-coverage/report.html`. Raw data lives next to it 
 
 The artifact's `report.html` has **iOS / Android / Web / All** tabs when all three jobs produced JSON.
 
-Uses Bun, `bun run example:install`, and the in-repo action — not an unpublished `payready/expo-coverage@v0` tag.
+Uses Bun, `bun run example:install`, and the in-repo action so CI tests the current source, not the published package.
 
 ## GitHub Actions: web only (consumer snippet)
 
@@ -36,11 +36,11 @@ jobs:
           # all: true
 ```
 
-The composite action builds the report, uploads it as an artifact and writes the numbers to the job summary. `fail-under` is optional. Pass `package: ./packages/expo-coverage` (after `bun run build`) when running the action from this repository before the package is published.
+The composite action builds the report, uploads it as an artifact and writes the numbers to the job summary. `fail-under` is optional.
 
 ## Full three-platform merge (consumer template)
 
-Copy [examples/tic-tac-toe/workflows/e2e.yml](../examples/tic-tac-toe/workflows/e2e.yml) into your app. Web, iOS and Android each upload `coverage-*.json`; the **report** job merges them. Until `payready/expo-coverage` is published, point the report step at a local checkout (`uses: ./` with `package: ./packages/expo-coverage`) or run `bunx expo-coverage report` after installing the package.
+Copy [examples/tic-tac-toe/workflows/e2e.yml](../examples/tic-tac-toe/workflows/e2e.yml) into your app. Web, iOS and Android each upload `coverage-*.json`; the **report** job merges them.
 
 ## One report from several jobs
 

@@ -1,5 +1,5 @@
 # Dogfood: web + iOS + Android each upload coverage-*.json; report merges into one demo-coverage-report.
-# Uses bun + example:install and the local composite action (./), not an unpublished registry tag.
+# Uses bun + example:install and the local composite action (./) so CI tests the current source.
 name: demo-e2e
 on:
   pull_request:
