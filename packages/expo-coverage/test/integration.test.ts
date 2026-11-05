@@ -68,6 +68,21 @@ describe('babel preset', () => {
     expect(entry).toContain('expo-coverage/autostart');
     expect(other).not.toContain('expo-coverage/autostart');
   });
+
+  test('writes a build-time EXPO_PUBLIC_COVERAGE_URL into the entry for the runtime', () => {
+    const babel = require('@babel/core');
+    const { mkdtempSync, writeFileSync } = require('node:fs');
+    const { tmpdir } = require('node:os');
+    const root = require('node:fs').realpathSync(mkdtempSync(join(tmpdir(), 'expo-coverage-url-')));
+    writeFileSync(join(root, 'package.json'), JSON.stringify({ main: 'index.js' }));
+    writeFileSync(join(root, 'index.js'), '');
+    process.env.EXPO_COVERAGE = '1';
+    process.env.EXPO_PUBLIC_COVERAGE_URL = 'http://127.0.0.1:9082';
+    const code = babel.transformSync('export const x = 1;', { filename: join(root, 'index.js'), presets: [[require.resolve('../babel.cjs'), { cwd: root }]], babelrc: false, configFile: false }).code;
+    delete process.env.EXPO_COVERAGE;
+    delete process.env.EXPO_PUBLIC_COVERAGE_URL;
+    expect(code).toContain('globalThis.__EXPO_COVERAGE_URL__ = "http://127.0.0.1:9082"');
+  });
 });
 
 describe('metro wrapper', () => {
