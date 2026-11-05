@@ -91,6 +91,25 @@ Every run writes `.expo-coverage/coverage-<platform>.json` and merges into what 
 bunx expo-coverage report --open
 ```
 
+## Unit tests
+
+Unit coverage shows up as a fourth platform, **Unit**, next to the e2e ones. Run your tests with coverage, then import the file:
+
+```bash
+# Jest (coverageReporters must include "json")
+bunx jest --coverage
+bunx expo-coverage import --platform unit coverage/coverage-final.json
+
+# bun test
+bun test --coverage --coverage-reporter=lcov
+bunx expo-coverage import --platform unit coverage/lcov.info \
+  --exclude '**/*.test.{ts,tsx}' --exclude '**/*.stories.tsx' --exclude '**/__mocks__/**'
+
+bunx expo-coverage report
+```
+
+The All tab counts a line as covered if any platform, unit included, ran it. Use `--tab unit` with `gaps`, `file`, `diff` and `summary` to look at unit tests alone.
+
 ## Next
 
 - [CI recipes](ci.md)
