@@ -1,6 +1,6 @@
 {
   "name": "expo-coverage",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "End-to-end JS coverage for Expo apps: iOS, Android and web in one report.",
   "license": "MIT",
   "author": "Pay Ready",
@@ -43,10 +43,10 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.0.0",
+    "@modelcontextprotocol/sdk": "^1.32.0",
     "babel-plugin-istanbul": "^7.0.0",
     "shiki": "^3.0.0",
-    "zod": "^3.23.0"
+    "zod": "^4.6.6"
   },
   "peerDependencies": {
     "@playwright/test": ">=1.40",
