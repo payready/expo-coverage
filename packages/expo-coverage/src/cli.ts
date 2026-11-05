@@ -10,7 +10,7 @@ const HELP = `expo-coverage: JS coverage for Expo apps (iOS, Android, web e2e an
   serve [--port 9082]     collect from instrumented apps until stopped (prebuilt apps)
   import <file>           merge unit-test coverage (Jest coverage-final.json or lcov.info)
                           --platform unit (default), --exclude <glob> (repeatable)
-  report [--open]         merge every platform into .expo-coverage/report.html
+  report [--open] [--all] merge every platform into .expo-coverage/report.html
   gaps [--top 10]         files with the most uncovered lines        (--json, --tab ios|android|web|unit)
   file <path>             uncovered ranges of one file, with source
   diff [base]             changed lines vs a git base that no test ran
@@ -18,6 +18,7 @@ const HELP = `expo-coverage: JS coverage for Expo apps (iOS, Android, web e2e an
   mcp                     MCP server for agents (stdio)
 
   --root <dir>   project root (default: cwd)     --dir <name>  output folder (default: .expo-coverage)
+  --all          inventory denominator (Istanbul --all): unloaded files count as 0%
 `;
 
 const parsed = parseArgs(process.argv.slice(2));

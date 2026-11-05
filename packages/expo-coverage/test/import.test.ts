@@ -129,7 +129,31 @@ describe('merging maps from different instrumenters', () => {
     const lcov = lcovToIstanbul('SF:/p/a.ts\nDA:2,3\nDA:4,1\nend_of_record', '/');
     for (const m of [mergeFile(real, lcov['/p/a.ts']!), mergeFile(lcov['/p/a.ts']!, real)]) {
       expect(lineCoverage(m)).toEqual({ 1: 0, 2: 3, 4: 1 });
-      expect(m.lcov).toBeUndefined();
+      expect(m.lineLevel).toBeUndefined();
     }
+  });
+});
+
+describe('unit with an inventory denominator (--all)', async () => {
+  // Real maps have statements on lines 1..n; the source has more non-blank lines than that, so a line-level guess would differ.
+  const SRC10 = Array.from({ length: 10 }, (_, i) => `const line${i + 1} = ${i + 1};`).join('\n');
+  const root = project({ 'src/a.ts': SRC10, 'src/unit.ts': 'export const u = 1;\nexport const v = 2;\n', 'src/never.ts': 'export const n = 1;\nexport const m = 2;\n' });
+  writeCoverage(root, 'ios', { 'src/a.ts': [1, 1, 0] });
+  writeFileSync(join(root, 'lcov.info'), 'SF:src/unit.ts\nDA:1,1\nend_of_record\n');
+  importCoverage({ root, platform: 'unit', file: 'lcov.info' });
+  const data = await buildCoverageData({ root, highlight: false, all: true });
+  const a = data.files.find((f) => f.p === 'src/a.ts')!;
+
+  test('a platform that never loaded a file starts from the real map at zero', () => {
+    expect(a.sums.unit!.l).toEqual([0, 3]);
+    expect(a.sums.all!.l).toEqual([2, 3]);
+  });
+
+  test('lcov line sets are reused for platforms that never loaded the file', () => {
+    expect(data.files.find((f) => f.p === 'src/unit.ts')!.sums.ios!.l).toEqual([0, 1]);
+  });
+
+  test('files nothing loaded still get the line-level baseline', () => {
+    expect(data.files.find((f) => f.p === 'src/never.ts')!.sums.ios!.l).toEqual([0, 2]);
   });
 });

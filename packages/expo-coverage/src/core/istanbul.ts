@@ -32,8 +32,8 @@ export interface RawFileCoverage {
   f: Counts;
   branchMap: Record<string, unknown>;
   b: BranchCounts;
-  /** Converted from lcov: one statement per line, so merges fold it by line rather than by location. */
-  lcov?: boolean;
+  /** Line-level map (lcov import, inventory baseline): one statement per line, so merges fold it by line rather than by location. */
+  lineLevel?: boolean;
 }
 export type RawCoverage = Record<string, RawFileCoverage>;
 
@@ -101,8 +101,8 @@ function idsByLine<M>(map: Record<string, M>, line: (m: M) => number): Map<numbe
 
 export function mergeFile(a: RawFileCoverage, b: RawFileCoverage): RawFileCoverage {
   // Keep the real (located) map as the base; an lcov map folds into it by line.
-  if (a.lcov && !b.lcov) return mergeFile(b, a);
-  const lineFold = !!b.lcov && !a.lcov;
+  if (a.lineLevel && !b.lineLevel) return mergeFile(b, a);
+  const lineFold = !!b.lineLevel && !a.lineLevel;
   const stLines = lineFold ? idsByLine(a.statementMap ?? {}, (l) => l.start.line) : null;
   const fnLines = lineFold ? idsByLine((a.fnMap ?? {}) as Record<string, FnMeta>, fnLine) : null;
   const brLines = lineFold ? idsByLine((a.branchMap ?? {}) as Record<string, BranchMeta>, brLine) : null;
@@ -140,7 +140,7 @@ export function mergeFile(a: RawFileCoverage, b: RawFileCoverage): RawFileCovera
     },
   );
   const out: RawFileCoverage = { ...a, statementMap, s, fnMap, f, branchMap, b: br };
-  if (!(a.lcov && b.lcov)) delete out.lcov;
+  if (!(a.lineLevel && b.lineLevel)) delete out.lineLevel;
   return out;
 }
 

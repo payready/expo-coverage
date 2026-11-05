@@ -46,4 +46,6 @@ export interface CoverageData {
   files: FileEntry[];
   sources: Record<string, Token[][]>;
   palette: [string, string][];
+  /** True when built with `--all` (inventory denominator includes unloaded files). */
+  inventory?: boolean;
 }

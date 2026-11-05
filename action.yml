@@ -10,6 +10,9 @@ inputs:
   fail-under:
     description: Fail the job when overall line coverage is below this percentage.
     default: ''
+  all:
+    description: Use inventory denominator (Istanbul --all). Unloaded files count as 0%.
+    default: 'false'
   artifact-name:
     description: Name of the uploaded report artifact.
     default: expo-coverage-report
@@ -39,8 +42,10 @@ runs:
         else
           RUN=(npx --yes "$PKG")
         fi
-        "${RUN[@]}" report --dir "${{ inputs.directory }}"
-        json="$("${RUN[@]}" summary --json --dir "${{ inputs.directory }}")"
+        all_flag=""
+        if [ "${{ inputs.all }}" = "true" ]; then all_flag="--all"; fi
+        "${RUN[@]}" report --dir "${{ inputs.directory }}" $all_flag
+        json="$("${RUN[@]}" summary --json --dir "${{ inputs.directory }}" $all_flag)"
         percent="$(echo "$json" | node -e 'process.stdin.on("data",d=>console.log(JSON.parse(d).lines.pct))')"
         echo "percent=$percent" >> "$GITHUB_OUTPUT"
         {

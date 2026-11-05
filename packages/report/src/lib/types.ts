@@ -54,6 +54,8 @@ export interface CoverageData {
   sources: Record<string, Token[][]>;
   /** [light, dark] token colors. */
   palette: [string, string][];
+  /** True when built with `--all` (inventory includes unloaded files at 0%). */
+  inventory?: boolean;
 }
 
 export type SumKey = keyof Sums;

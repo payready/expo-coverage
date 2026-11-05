@@ -36,7 +36,7 @@ export function lcovToIstanbul(text: string, root: string): RawCoverage {
     if (tag === 'SF') {
       finish();
       const path = resolve(root, value);
-      fc = { path, statementMap: {}, s: {}, fnMap: {}, f: {}, branchMap: {}, b: {}, lcov: true };
+      fc = { path, statementMap: {}, s: {}, fnMap: {}, f: {}, branchMap: {}, b: {}, lineLevel: true };
       fnByName = new Map();
       brByBlock = new Map();
       fnCounts = null;
