@@ -12,7 +12,7 @@ const text = (value: unknown) => ({ content: [{ type: 'text' as const, text: typ
 
 /** Coverage as tools an agent can call: where are the gaps, what exactly is uncovered, did my change get tested. */
 export async function mcp(ctx: Ctx): Promise<void> {
-  const server = new McpServer({ name: 'expo-coverage', version: '0.1.0' });
+  const server = new McpServer({ name: 'expo-coverage', version: '0.2.0' });
 
   server.tool('coverage_summary', 'Overall line coverage, per platform (ios, android, web e2e and unit tests).', { tab }, async ({ tab }) => text(query.summary(await load(ctx), tab)));
 
