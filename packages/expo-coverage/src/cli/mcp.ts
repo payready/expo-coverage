@@ -2,17 +2,19 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { z } from 'zod';
 import * as query from '../core/query';
+import { TABS } from '../core/types';
+import type { Tab } from '../core/types';
 import type { Ctx } from './commands';
 import { load } from './commands';
 
-const tab = z.enum(['all', 'ios', 'android', 'web']).default('all');
+const tab = z.enum(TABS as [Tab, ...Tab[]]).default('all');
 const text = (value: unknown) => ({ content: [{ type: 'text' as const, text: typeof value === 'string' ? value : JSON.stringify(value, null, 2) }] });
 
 /** Coverage as tools an agent can call: where are the gaps, what exactly is uncovered, did my change get tested. */
 export async function mcp(ctx: Ctx): Promise<void> {
   const server = new McpServer({ name: 'expo-coverage', version: '0.1.0' });
 
-  server.tool('coverage_summary', 'Overall e2e line coverage, per platform.', { tab }, async ({ tab }) => text(query.summary(await load(ctx), tab)));
+  server.tool('coverage_summary', 'Overall line coverage, per platform (ios, android, web e2e and unit tests).', { tab }, async ({ tab }) => text(query.summary(await load(ctx), tab)));
 
   server.tool(
     'coverage_gaps',

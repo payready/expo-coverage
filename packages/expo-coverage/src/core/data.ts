@@ -44,8 +44,11 @@ export async function buildCoverageData(opts: BuildOptions): Promise<CoverageDat
     const lineSets = present.map((p) => (maps[p][abs] ? lineCoverage(maps[p][abs]) : null));
     const lineNumbers = [...new Set(lineSets.flatMap((l) => (l ? Object.keys(l) : [])))].map(Number).sort((a, b) => a - b);
     const lc: FileEntry['lc'] = {};
-    for (const n of lineNumbers) lc[n] = lineSets.map((l) => (l ? (l[n] ?? 0) : null));
-    const sums: FileEntry['sums'] = { all: summarize(all[abs]!) };
+    // null: not executable for that platform (file not loaded, or its instrumenter has no statement on the line).
+    for (const n of lineNumbers) lc[n] = lineSets.map((l) => l?.[n] ?? null);
+    const lines = Object.values(lc);
+    // A line counts once, covered when any platform ran it, however each instrumenter split it into statements.
+    const sums: FileEntry['sums'] = { all: { ...summarize(all[abs]!), l: [lines.filter((h) => h.some((n) => (n ?? 0) > 0)).length, lines.length] } };
     for (const p of present) if (maps[p][abs]) sums[p as Tab] = summarize(maps[p][abs]);
     files.push({ p: rel, lc, sums });
   }

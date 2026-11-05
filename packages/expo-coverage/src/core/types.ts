@@ -1,6 +1,8 @@
-export type Platform = 'ios' | 'android' | 'web';
+export type Platform = 'ios' | 'android' | 'web' | 'unit';
 export type Tab = Platform | 'all';
-export const PLATFORMS: Platform[] = ['ios', 'android', 'web'];
+export const PLATFORMS: Platform[] = ['ios', 'android', 'web', 'unit'];
+export const TABS: Tab[] = [...PLATFORMS, 'all'];
+export const PLATFORM_LABEL: Record<Tab, string> = { ios: 'iOS', android: 'Android', web: 'Web', unit: 'Unit', all: 'All' };
 
 export type Ratio = readonly [covered: number, total: number];
 export interface Sums {
