@@ -1,6 +1,6 @@
 {
   "name": "expo-coverage",
-  "version": "0.1.0",
+  "version": "0.2.1",
   "description": "End-to-end JS coverage for Expo apps: iOS, Android and web in one report.",
   "license": "MIT",
   "author": "Pay Ready",
@@ -28,6 +28,7 @@
     "./autostart": "./dist/autostart.js",
     "./babel": "./babel.cjs",
     "./metro": "./metro.cjs",
+    "./instrument-globs": "./instrument-globs.cjs",
     "./playwright": {
       "types": "./dist/playwright.d.ts",
       "default": "./dist/playwright.js"
@@ -35,7 +36,7 @@
     "./app.plugin": "./app.plugin.js",
     "./package.json": "./package.json"
   },
-  "files": ["dist", "assets", "babel.cjs", "metro.cjs", "app.plugin.js", "README.md", "LICENSE"],
+  "files": ["dist", "assets", "babel.cjs", "metro.cjs", "app.plugin.js", "instrument-globs.cjs", "README.md", "LICENSE"],
   "scripts": {
     "build": "bun run scripts/build.ts",
     "test": "bun test",

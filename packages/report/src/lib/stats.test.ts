@@ -5,10 +5,10 @@ import type { CoverageData } from './types';
 const data: CoverageData = {
   title: 't',
   generated: '',
-  platforms: ['ios', 'android', 'web'],
+  platforms: ['ios', 'android', 'web', 'unit'],
   sources: {},
   palette: [],
-  files: [{ p: 'a.ts', sums: {}, lc: { '1': [1, 1, 1], '2': [1, 0, 0], '3': [0, 0, 0], '4': [1, 1, 0], '5': [null, 2, 0] } }],
+  files: [{ p: 'a.ts', sums: {}, lc: { '1': [1, 1, 1, 1], '2': [1, 0, 0, 0], '3': [0, 0, 0, 0], '4': [1, 1, 0, 0], '5': [null, 2, 0, null], '6': [0, 0, 0, 4], '7': [null, null, null, 1] } }],
 };
 
 describe('stats', () => {
@@ -27,13 +27,15 @@ describe('stats', () => {
   });
 
   it('overlap counts who covers each line', () => {
-    expect(overlap(data)).toEqual({ all: 1, none: 1, some: 1, only: { ios: 1, android: 1, web: 0 } });
+    expect(overlap(data)).toEqual({ all: 1, none: 1, some: 1, only: { ios: 1, android: 1, web: 0, unit: 2 } });
   });
 
   it('lineHit sums platforms for All and reads one platform otherwise', () => {
-    const hits = [2, null, 3];
-    expect(lineHit(hits, 'all', data.platforms)).toBe(5);
+    const hits = [2, null, 3, 4];
+    expect(lineHit(hits, 'all', data.platforms)).toBe(9);
     expect(lineHit(hits, 'android', data.platforms)).toBeNull();
     expect(lineHit(hits, 'web', data.platforms)).toBe(3);
+    expect(lineHit([0, 0, 0, 1], 'all', data.platforms)).toBe(1);
+    expect(lineHit(hits, 'unit', data.platforms)).toBe(4);
   });
 });

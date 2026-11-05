@@ -28,6 +28,24 @@ describe('merge', () => {
     });
     expect(Object.keys(out).sort()).toEqual(['/ws/app/src/a.ts', '/ws/app/src/b.ts']);
   });
+
+  test('rehome maps the same project path from another machine (CI iOS mac → Linux report)', () => {
+    const out = rehome('/home/runner/work/expo-coverage/expo-coverage', {
+      '/Users/runner/work/expo-coverage/expo-coverage/examples/tic-tac-toe/src/App.tsx': fileCoverage(
+        '/Users/runner/work/expo-coverage/expo-coverage/examples/tic-tac-toe/src/App.tsx',
+        [1],
+      ),
+      '/home/runner/work/expo-coverage/expo-coverage/examples/tic-tac-toe/src/game.ts': fileCoverage(
+        '/home/runner/work/expo-coverage/expo-coverage/examples/tic-tac-toe/src/game.ts',
+        [1],
+      ),
+      '/Users/runner/work/other-repo/other-repo/src/x.ts': fileCoverage('/Users/runner/work/other-repo/other-repo/src/x.ts', [1]),
+    });
+    expect(Object.keys(out).sort()).toEqual([
+      '/home/runner/work/expo-coverage/expo-coverage/examples/tic-tac-toe/src/App.tsx',
+      '/home/runner/work/expo-coverage/expo-coverage/examples/tic-tac-toe/src/game.ts',
+    ]);
+  });
 });
 
 describe('collector', () => {

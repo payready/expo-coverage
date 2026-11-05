@@ -7,5 +7,7 @@ bun run --cwd "$root" build
 mkdir -p "$root/.tmp"
 tarball="$(cd "$root/packages/expo-coverage" && npm pack --silent --pack-destination "$root/.tmp")"
 cd "$root/examples/tic-tac-toe"
+# Fixed name so the demo's package.json survives version bumps.
+cp "$root/.tmp/$tarball" "$root/.tmp/expo-coverage.tgz"
 rm -f bun.lock  # the tarball hash changes every build
-bun add -d "file:../../.tmp/$tarball"
+bun install

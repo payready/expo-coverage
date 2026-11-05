@@ -10,6 +10,7 @@
  */
 const fs = require('node:fs');
 const path = require('node:path');
+const { DEFAULT_EXCLUDE } = require('./instrument-globs.cjs');
 
 /** Absolute path of the app's entry file: the `entry` option, else package.json "main", else index.js. */
 function resolveEntry(cwd, entry) {
@@ -30,7 +31,7 @@ function resolveEntry(cwd, entry) {
 }
 
 /** Puts `import 'expo-coverage/autostart'` at the top of the entry so the runtime starts with the app. */
-function injectRuntime(entryPath) {
+function injectRuntime(entryPath, bakedUrl) {
   return function ({ types: t }) {
     return {
       name: 'expo-coverage-runtime',
@@ -45,6 +46,8 @@ function injectRuntime(entryPath) {
           }
           if (file !== entryPath) return;
           programPath.unshiftContainer('body', t.importDeclaration([], t.stringLiteral('expo-coverage/autostart')));
+          // EXPO_PUBLIC_* is not inlined in node_modules, so the runtime reads the build-time URL from here.
+          if (bakedUrl) programPath.pushContainer('body', t.expressionStatement(t.assignmentExpression('=', t.memberExpression(t.identifier('globalThis'), t.identifier('__EXPO_COVERAGE_URL__')), t.stringLiteral(bakedUrl))));
         },
       },
     };
@@ -54,7 +57,7 @@ function injectRuntime(entryPath) {
 module.exports = function expoCoveragePreset(api, options = {}) {
   const enabled = options.force === true || process.env.EXPO_COVERAGE === '1';
   // Instrumented and plain output differ, so they must not share a cache entry.
-  api.cache.using(() => (enabled ? 'expo-coverage:on' : 'expo-coverage:off'));
+  api.cache.using(() => (enabled ? `expo-coverage:on:${process.env.EXPO_PUBLIC_COVERAGE_URL || ''}` : 'expo-coverage:off'));
   if (!enabled) return {};
   const cwd = options.cwd || process.cwd();
   return {
@@ -64,11 +67,11 @@ module.exports = function expoCoveragePreset(api, options = {}) {
         {
           cwd,
           include: options.include,
-          // test-exclude's defaults already skip node_modules and *.test.* files.
-          exclude: ['**/node_modules/**', '**/*.test.*', '**/*.spec.*', '**/__tests__/**', '**/e2e/**', '**/.expo/**', '**/.expo-coverage/**', ...(options.exclude || [])],
+          // Shared with `report --all` inventory (instrument-globs.cjs).
+          exclude: [...DEFAULT_EXCLUDE, ...(options.exclude || [])],
         },
       ],
-      injectRuntime(resolveEntry(cwd, options.entry)),
+      injectRuntime(resolveEntry(cwd, options.entry), process.env.EXPO_PUBLIC_COVERAGE_URL),
     ],
   };
 };

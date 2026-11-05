@@ -1,5 +1,5 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
-import { dirname, join } from 'node:path';
+import { basename, dirname, join } from 'node:path';
 import { mergeInto, type RawCoverage } from './istanbul';
 
 /** Fold `incoming` into the map stored at `file`. A JS reload restarts the in-app counters, so posts merge rather than overwrite. */
@@ -21,14 +21,23 @@ export function mergeCoverageFile(file: string, incoming: unknown): void {
 /**
  * Metro's transform cache is shared by sibling git worktrees, so a map can name another checkout's paths.
  * Point those at `root`, and drop anything outside the project.
+ *
+ * Also remaps absolute paths from another OS/runner (e.g. macOS iOS CI → Linux report job)
+ * by taking the suffix after the final `/{basename(root)}/` segment.
  */
 export function rehome(root: string, data: Record<string, any>): Record<string, any> {
   const siblings = `${dirname(root)}/`;
+  const marker = `/${basename(root)}/`;
   const out: Record<string, any> = {};
   for (const [path, fc] of Object.entries(data)) {
     let local = path;
-    if (!path.startsWith(`${root}/`) && path.startsWith(siblings)) {
-      local = join(root, path.slice(siblings.length).split('/').slice(1).join('/'));
+    if (!path.startsWith(`${root}/`)) {
+      if (path.startsWith(siblings)) {
+        local = join(root, path.slice(siblings.length).split('/').slice(1).join('/'));
+      } else {
+        const idx = path.lastIndexOf(marker);
+        if (idx >= 0) local = join(root, path.slice(idx + marker.length));
+      }
     }
     // Virtual modules (e.g. react-native-web shims) have no file on disk and no place in a report.
     if (!local.startsWith(`${root}/`) || local.includes('\0')) continue;

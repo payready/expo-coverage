@@ -5,6 +5,9 @@ appId: dev.example.tictactoe
 - tapOn:
     text: Open
     optional: true
+- extendedWaitUntil:
+    visible: "Play the computer"
+    timeout: 60000
 - tapOn: "Play the computer"
 - tapOn:
     id: cell-0

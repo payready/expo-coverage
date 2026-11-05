@@ -9,7 +9,8 @@
     "test:web": "playwright test",
     "coverage:web": "expo-coverage run -- playwright test",
     "report": "expo-coverage report --open",
-    "coverage:ios": "EXPO_COVERAGE=1 expo run:ios --port 8766 && expo-coverage run -- maestro test .maestro"
+    "coverage:ios": "EXPO_COVERAGE=1 expo run:ios --port 8766 && expo-coverage run -- maestro test .maestro",
+    "coverage:android": "EXPO_COVERAGE=1 expo run:android --port 8766 && expo-coverage run -- maestro test .maestro"
   },
   "dependencies": {
     "expo": "~57.0.26",
@@ -24,14 +25,7 @@
     "@playwright/test": "1.60.0",
     "@types/react": "^19.3.0",
     "babel-preset-expo": "^57.0.13",
-    "expo-coverage": "file:../../.tmp/expo-coverage-0.1.0.tgz",
-    "expo-coverage": "file:../../.tmp/expo-coverage-0.1.0.tgz",
-    "expo-coverage": "file:../../.tmp/expo-coverage-0.1.0.tgz",
-    "expo-coverage": "file:../../.tmp/expo-coverage-0.1.0.tgz",
-    "expo-coverage": "file:../../.tmp/expo-coverage-0.1.0.tgz",
-    "expo-coverage": "file:../../.tmp/expo-coverage-0.1.0.tgz",
-    "expo-coverage": "file:../../.tmp/expo-coverage-0.1.0.tgz",
-    "expo-coverage": "file:../../.tmp/expo-coverage-0.1.0.tgz",
+    "expo-coverage": "file:../../.tmp/expo-coverage.tgz",
     "typescript": "~6.0.3"
   },
   "overrides": {

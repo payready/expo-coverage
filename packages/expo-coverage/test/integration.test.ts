@@ -11,9 +11,16 @@ describe('args', () => {
       command: 'run',
       positionals: [],
       flags: { port: '9000', open: true },
+      lists: { port: ['9000'] },
       rest: ['maestro', 'test', '.maestro'],
     });
     expect(parseArgs(['file', 'app/a.tsx', '--tab=ios']).positionals).toEqual(['app/a.tsx']);
+  });
+
+  test('repeatable flags keep every value', () => {
+    const p = parseArgs(['import', '--platform', 'unit', 'lcov.info', '--exclude', '**/*.test.ts', '--exclude=**/__mocks__/**']);
+    expect(p.positionals).toEqual(['lcov.info']);
+    expect(p.lists.exclude).toEqual(['**/*.test.ts', '**/__mocks__/**']);
   });
 });
 
@@ -33,7 +40,7 @@ describe('babel preset', () => {
     const [plugin, options] = out.plugins[0];
     expect(plugin).toContain('babel-plugin-istanbul');
     expect(options.cwd).toBe(process.cwd());
-    expect(options.exclude).toEqual(expect.arrayContaining(['**/node_modules/**', '**/generated/**']));
+    expect(options.exclude).toEqual(expect.arrayContaining(['**/node_modules/**', '**/generated/**', '**/*.d.ts']));
   });
 
   test('actually instruments code through Babel', () => {
@@ -60,6 +67,21 @@ describe('babel preset', () => {
     delete process.env.EXPO_COVERAGE;
     expect(entry).toContain('expo-coverage/autostart');
     expect(other).not.toContain('expo-coverage/autostart');
+  });
+
+  test('writes a build-time EXPO_PUBLIC_COVERAGE_URL into the entry for the runtime', () => {
+    const babel = require('@babel/core');
+    const { mkdtempSync, writeFileSync } = require('node:fs');
+    const { tmpdir } = require('node:os');
+    const root = require('node:fs').realpathSync(mkdtempSync(join(tmpdir(), 'expo-coverage-url-')));
+    writeFileSync(join(root, 'package.json'), JSON.stringify({ main: 'index.js' }));
+    writeFileSync(join(root, 'index.js'), '');
+    process.env.EXPO_COVERAGE = '1';
+    process.env.EXPO_PUBLIC_COVERAGE_URL = 'http://127.0.0.1:9082';
+    const code = babel.transformSync('export const x = 1;', { filename: join(root, 'index.js'), presets: [[require.resolve('../babel.cjs'), { cwd: root }]], babelrc: false, configFile: false }).code;
+    delete process.env.EXPO_COVERAGE;
+    delete process.env.EXPO_PUBLIC_COVERAGE_URL;
+    expect(code).toContain('globalThis.__EXPO_COVERAGE_URL__ = "http://127.0.0.1:9082"');
   });
 });
 

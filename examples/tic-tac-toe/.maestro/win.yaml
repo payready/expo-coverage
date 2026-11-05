@@ -5,6 +5,10 @@ appId: dev.example.tictactoe
 - tapOn:
     text: Open
     optional: true
+- extendedWaitUntil:
+    visible:
+      id: cell-0
+    timeout: 60000
 - assertVisible: "X's turn"
 - tapOn:
     id: cell-0

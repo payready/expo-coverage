@@ -1,18 +1,19 @@
 import { AppState, NativeModules, Platform, TurboModuleRegistry } from 'react-native';
 
 declare const process: { env: Record<string, string | undefined> };
-type CoverageGlobal = typeof globalThis & { __coverage__?: unknown; __expoCoverageFlush?: () => Promise<void> };
+type CoverageGlobal = typeof globalThis & { __coverage__?: unknown; __expoCoverageFlush?: () => Promise<void>; __EXPO_COVERAGE_URL__?: string };
 
 const g = globalThis as CoverageGlobal;
 
 /**
  * Where to post. In order:
  *  1. EXPO_PUBLIC_COVERAGE_URL, baked in at build time: prebuilt apps talking to `expo-coverage serve`.
+ *     Expo does not inline EXPO_PUBLIC_* inside node_modules, so the babel preset also writes it to the entry.
  *  2. The Metro server that served the bundle (dev builds, Expo Go): Metro answers `/__coverage` itself.
  *  3. The page's own origin on web.
  */
 export function coverageUrl(): string | null {
-  const baked = process.env.EXPO_PUBLIC_COVERAGE_URL;
+  const baked = g.__EXPO_COVERAGE_URL__ || process.env.EXPO_PUBLIC_COVERAGE_URL;
   if (baked) return baked.replace(/\/$/, '');
   if (Platform.OS === 'web') return typeof location !== 'undefined' ? location.origin : null;
   // Bridgeless (new architecture) apps expose SourceCode as a TurboModule only.
