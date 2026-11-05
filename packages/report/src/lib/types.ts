@@ -1,4 +1,4 @@
-export type Platform = 'ios' | 'android' | 'web';
+export type Platform = 'ios' | 'android' | 'web' | 'unit';
 export type Tab = Platform | 'all';
 
 /** [covered, total] */
@@ -14,7 +14,7 @@ export interface Sums {
 export interface FileEntry {
   /** Path relative to the project root. */
   p: string;
-  /** Executable line -> hit count per platform (same order as `platforms`); null when that platform never loaded the file. */
+  /** Executable line -> hit count per platform (same order as `platforms`); null when that line is not executable there (or it never loaded the file). */
   lc: Record<string, (number | null)[]>;
   sums: Partial<Record<Tab, Sums>>;
 }
